@@ -1012,23 +1012,21 @@ select {
 .coin {
   position: relative;
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
 }
 
 .coin > img {
-  width: 38px;
-  height: 38px;
-  border-radius: 99px;
-  object-fit: cover;
-  background: #fff;
-  border: 1px solid var(--border-strong);
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, 0.55));
 }
 
 .coin-dir {
   position: absolute;
-  right: -3px;
-  bottom: -3px;
+  right: -2px;
+  bottom: 0;
   width: 18px;
   height: 18px;
   display: inline-flex;
@@ -1056,13 +1054,10 @@ select {
 }
 
 .asset-coin {
-  width: 34px;
-  height: 34px;
-  border-radius: 99px;
-  margin-left: -8px;
-  border: 2px solid var(--surface);
-  background: #fff;
-  overflow: hidden;
+  width: 42px;
+  height: 42px;
+  margin-left: -10px;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.5));
   transition: transform var(--dur) var(--ease);
 }
 
@@ -1071,13 +1066,13 @@ select {
 }
 
 .asset-coin:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px) scale(1.05);
 }
 
 .asset-coin > img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* Scrollbar discreta */

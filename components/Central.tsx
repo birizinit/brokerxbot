@@ -165,7 +165,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <ActivityIcon size={16} />
               <span>
                 Próxima operação em <b className="num accent">{countdown}</b> — ritmo de{" "}
-                {config.opsPerHour}/h em ativos sorteados.
+                {config.opsPerHour}/h, ativos conforme o movimento do mercado.
               </span>
             </div>
           )}
@@ -225,7 +225,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
           <div className="config-row">
             <div className="head">
               <span className="k">Ativos</span>
-              <span className="hint">Sorteados automaticamente</span>
+              <span className="hint">Escolhidos conforme o movimento do mercado</span>
             </div>
             <div className="asset-row">
               {ASSETS.map((a) => (
