@@ -1046,7 +1046,7 @@ select {
   background: var(--down);
 }
 
-/* Vitrine de ativos sorteados na configuração */
+/* Vitrine de ativos na configuração */
 
 .asset-row {
   display: flex;

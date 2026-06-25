@@ -60,8 +60,8 @@ export function TermsModal({ open, isDemo, onAccept, onClose }: TermsModalProps)
 
         <ul className="terms-list">
           <li>
-            O robô realiza operações de forma <b>automática</b> em ativos sorteados, no ritmo que você
-            configurou.
+            O robô realiza operações de forma <b>automática</b> em ativos escolhidos conforme o
+            movimento do mercado, no ritmo que você configurou.
           </li>
           <li>
             Operações financeiras envolvem <b>risco de perda</b>. Resultados passados não garantem
