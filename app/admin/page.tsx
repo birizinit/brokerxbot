@@ -153,10 +153,10 @@ export default function AdminPage() {
           <div className="auth" style={{ maxWidth: 400 }}>
             <div className="auth-head">
               <div className="auth-logo">
-                <img src="/logo.png" alt="Sniper Bot" />
+                <img src="/logo-full.png" alt="Sniper Trader" className="logo-full" />
               </div>
               <h1 className="title disp">Painel Admin</h1>
-              <p className="subtitle">Acesso restrito — Sniper Bot</p>
+              <p className="subtitle">Acesso restrito — Sniper Trader</p>
             </div>
             <div className="card card-pad card-glow">
               <form className="form-grid" onSubmit={handleLogin} noValidate>
@@ -226,10 +226,10 @@ export default function AdminPage() {
         <div className="content" style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div className="page-head">
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <img src="/logo.png" alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
+              <img src="/logo-full.png" alt="Sniper Trader" style={{ height: 46, width: "auto", objectFit: "contain" }} />
               <div>
                 <h1 className="disp page-title">Clientes</h1>
-                <p className="page-sub">Sniper Bot — painel administrativo</p>
+                <p className="page-sub">Sniper Trader — painel administrativo</p>
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>

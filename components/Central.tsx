@@ -148,13 +148,11 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     <div className="app" data-collapsed={collapsed}>
       <aside className="sidebar" data-collapsed={collapsed}>
         <div className="side-brand">
-          <img src="/logo.png" alt="Logo" />
-          <div className="side-brand-txt">
-            <span className="bn">
-              SNIPER <b>BOT</b>
-            </span>
-            <span className="bt">TRADER</span>
-          </div>
+          {collapsed ? (
+            <img src="/logo.png" alt="Sniper Trader" className="side-logo-emblem" />
+          ) : (
+            <img src="/logo-full.png" alt="Sniper Trader" className="side-logo-full" />
+          )}
         </div>
 
         <nav className="side-nav">

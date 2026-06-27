@@ -55,7 +55,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <h1 className="title" style={{ marginTop: 12 }}>
             Crie seu perfil
           </h1>
-          <p className="subtitle">Esses dados identificam você dentro do Sniper Bot.</p>
+          <p className="subtitle">Esses dados identificam você dentro do Sniper Trader.</p>
         </div>
 
         <div className="card card-pad card-glow">
