@@ -2575,9 +2575,21 @@ select {
   padding: 6px 0 18px;
 }
 
+.sidebar[data-collapsed="true"] .side-brand-txt {
+  display: none;
+}
+
 .sidebar[data-collapsed="true"] .side-link {
   justify-content: center;
   padding: 12px 0;
+}
+
+.sidebar[data-collapsed="true"] .side-link span:not(.side-dot) {
+  display: none;
+}
+
+.sidebar[data-collapsed="true"] .side-dot {
+  display: none;
 }
 
 .sidebar[data-collapsed="true"] .online {
