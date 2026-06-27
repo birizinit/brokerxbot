@@ -8,6 +8,7 @@ import { useBot } from "@/lib/useBot"
 import { computeStats } from "@/lib/stats"
 import { getPrefs, setPrefs as persistPrefs, type UiPrefs } from "@/lib/prefs"
 import { TermsModal } from "@/components/TermsModal"
+import { AlertModal } from "@/components/AlertModal"
 import { DashboardTab } from "@/components/tabs/DashboardTab"
 import { RoboTab } from "@/components/tabs/RoboTab"
 import { StatsTab } from "@/components/tabs/StatsTab"
@@ -50,6 +51,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const [tab, setTab] = useState<TabId>("dashboard")
   const [termsOpen, setTermsOpen] = useState(false)
   const [riskMessage, setRiskMessage] = useState<string | null>(null)
+  const [activateError, setActivateError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.getSidebarCollapsed())
   const [prefs, setPrefsState] = useState<UiPrefs>(() => getPrefs())
 
@@ -130,6 +132,14 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const handleToggle = () => {
     if (active) {
       setActive(false)
+      return
+    }
+    // Bloqueia a ativação se o saldo real for menor que o valor da entrada.
+    if (balance != null && balance < config.amount) {
+      setActivateError(
+        `Sua entrada por operação é $ ${money(config.amount)}, mas o saldo da sua conta real é $ ${money(balance)}. ` +
+          `Deposite saldo na corretora para ativar o robô.`,
+      )
       return
     }
     setTermsOpen(true)
@@ -266,6 +276,13 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       </div>
 
       <TermsModal open={termsOpen} isDemo={false} onAccept={acceptTerms} onClose={() => setTermsOpen(false)} />
+
+      <AlertModal
+        open={activateError != null}
+        title="Saldo insuficiente"
+        message={activateError ?? ""}
+        onClose={() => setActivateError(null)}
+      />
     </div>
   )
 }
