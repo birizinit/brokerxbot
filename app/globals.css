@@ -423,9 +423,9 @@ select {
 }
 
 .auth-logo img {
-  height: 58px;
+  height: 96px;
   width: auto;
-  filter: drop-shadow(0 0 30px rgba(221, 255, 65, 0.3));
+  filter: drop-shadow(0 0 34px rgba(221, 255, 65, 0.32));
 }
 
 .help {
