@@ -51,3 +51,21 @@ export async function upsertClient(c: ClientInput): Promise<void> {
     [c.name, c.email, c.phone],
   )
 }
+
+export interface ClientRow {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Lista todos os clientes (mais recentes primeiro). */
+export async function listClients(): Promise<ClientRow[]> {
+  await ensureSchema()
+  const r = await pool().query(
+    `SELECT id, name, email, phone, created_at, updated_at FROM clients ORDER BY created_at DESC`,
+  )
+  return r.rows as ClientRow[]
+}
