@@ -51,11 +51,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       <div className="auth">
         <div className="auth-head">
           <div className="auth-logo">
-            <img src="/logo.png" alt="Logo" />
+            <img src="/logo-full.png" alt="Sniper Trader" className="logo-full" />
           </div>
-          <h1 className="title">
-            SNIPER <span className="accent">BOT</span>
-          </h1>
           <p className="subtitle">Acesse com sua chave API para ativar o robô.</p>
         </div>
 
