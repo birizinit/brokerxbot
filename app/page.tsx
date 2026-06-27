@@ -1,74 +1,61 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LoginScreen } from "@/components/LoginScreen"
-import { Onboarding } from "@/components/Onboarding"
+import { AuthScreen } from "@/components/AuthScreen"
 import { Central } from "@/components/Central"
-import { storage, type Profile } from "@/lib/storage"
-import { saveClient } from "@/lib/api"
+import { authMe, authLogout } from "@/lib/api"
+import { SpinnerIcon } from "@/components/icons"
+import type { Profile } from "@/lib/storage"
 
-type Stage = "loading" | "login" | "onboarding" | "central"
+type Stage = "loading" | "auth" | "central"
 
 export default function Page() {
   const [stage, setStage] = useState<Stage>("loading")
-  const [apiKey, setApiKey] = useState<string>("")
+  const [apiKey, setApiKey] = useState("")
   const [profile, setProfile] = useState<Profile | null>(null)
 
-  // Restaura sessão do localStorage só no cliente (evita mismatch de hidratação).
-  useEffect(() => {
-    const savedKey = storage.getApiKey()
-    const savedProfile = storage.getProfile()
-
-    if (!savedKey) {
-      setStage("login")
-      return
-    }
-
-    setApiKey(savedKey)
-    if (savedProfile) {
-      setProfile(savedProfile)
+  const loadSession = async () => {
+    const acc = await authMe()
+    if (acc) {
+      setApiKey(acc.apiKey)
+      setProfile({ name: acc.name, email: acc.email, phone: acc.phone })
       setStage("central")
     } else {
-      setStage("onboarding")
+      setStage("auth")
     }
+  }
+
+  useEffect(() => {
+    loadSession()
   }, [])
 
-  const handleLogin = (key: string) => {
-    storage.setApiKey(key)
-    setApiKey(key)
-    const savedProfile = storage.getProfile()
-    if (savedProfile) {
-      setProfile(savedProfile)
-      setStage("central")
-    } else {
-      setStage("onboarding")
-    }
-  }
-
-  const handleOnboardingDone = (data: Profile) => {
-    storage.setProfile(data)
-    setProfile(data)
-    setStage("central")
-    // Persiste o cliente no banco (não bloqueia o fluxo).
-    void saveClient(data)
-  }
-
-  const handleLogout = () => {
-    storage.clearApiKey()
+  const handleLogout = async () => {
+    await authLogout()
     setApiKey("")
-    setStage("login")
+    setProfile(null)
+    setStage("auth")
   }
 
   if (stage === "loading") {
-    return <div className="center" />
+    return (
+      <div className="center">
+        <SpinnerIcon size={28} className="spin" />
+        <style jsx>{`
+          :global(.spin) {
+            animation: spin 0.8s linear infinite;
+          }
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
+      </div>
+    )
   }
 
-  if (stage === "login") {
-    return <LoginScreen onLogin={handleLogin} />
-  }
-
-  if (stage === "onboarding") {
-    return <Onboarding onComplete={handleOnboardingDone} />
+  if (stage === "auth") {
+    return <AuthScreen onAuthed={loadSession} />
   }
 
   return <Central apiKey={apiKey} profile={profile as Profile} onLogout={handleLogout} />

@@ -27,6 +27,69 @@ function authHeaders(apiKey: string): HeadersInit {
   return { "api-token": apiKey }
 }
 
+export interface SessionAccount {
+  name: string
+  email: string
+  phone: string
+  apiKey: string
+}
+
+/** Carrega a sessão atual (conta + chave API). Null se não logado. */
+export async function authMe(): Promise<SessionAccount | null> {
+  try {
+    const res = await fetch("/api/auth/me", { cache: "no-store" })
+    if (!res.ok) return null
+    const d = await res.json()
+    return { name: d.name, email: d.email, phone: d.phone, apiKey: d.apiKey }
+  } catch {
+    return null
+  }
+}
+
+export async function authLogin(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
+    if (res.ok) return { ok: true }
+    const d = await res.json().catch(() => ({}))
+    return { ok: false, error: d.error ?? "Não foi possível entrar." }
+  } catch {
+    return { ok: false, error: "Falha de conexão." }
+  }
+}
+
+export async function authRegister(data: {
+  name: string
+  email: string
+  phone: string
+  password: string
+  apiKey: string
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    if (res.ok) return { ok: true }
+    const d = await res.json().catch(() => ({}))
+    return { ok: false, error: d.error ?? "Não foi possível criar a conta." }
+  } catch {
+    return { ok: false, error: "Falha de conexão." }
+  }
+}
+
+export async function authLogout(): Promise<void> {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" })
+  } catch {
+    /* ignora */
+  }
+}
+
 /** Salva o cliente (lead do onboarding) no banco. Falha silenciosa. */
 export async function saveClient(client: { name: string; email: string; phone: string }): Promise<void> {
   try {

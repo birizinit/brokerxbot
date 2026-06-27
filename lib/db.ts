@@ -30,8 +30,80 @@ async function ensureSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS accounts (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT,
+      password_hash TEXT NOT NULL,
+      api_key_enc TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `)
   schemaReady = true
+}
+
+export interface AccountRow {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  password_hash: string
+  api_key_enc: string
+  created_at: string
+}
+
+export interface NewAccount {
+  name: string
+  email: string
+  phone: string | null
+  passwordHash: string
+  apiKeyEnc: string
+}
+
+/** Cria uma conta. Lança erro 'EMAIL_TAKEN' se o e-mail já existir. */
+export async function createAccount(a: NewAccount): Promise<string> {
+  await ensureSchema()
+  try {
+    const r = await pool().query(
+      `INSERT INTO accounts (name, email, phone, password_hash, api_key_enc)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [a.name, a.email, a.phone, a.passwordHash, a.apiKeyEnc],
+    )
+    return r.rows[0].id as string
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "23505") {
+      throw new Error("EMAIL_TAKEN")
+    }
+    throw e
+  }
+}
+
+export async function getAccountByEmail(email: string): Promise<AccountRow | null> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT * FROM accounts WHERE email = $1`, [email])
+  return (r.rows[0] as AccountRow) ?? null
+}
+
+export async function getAccountById(id: string): Promise<AccountRow | null> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT * FROM accounts WHERE id = $1`, [id])
+  return (r.rows[0] as AccountRow) ?? null
+}
+
+/** Lista contas para o admin (sem senha/chave). */
+export async function listAccounts(): Promise<ClientRow[]> {
+  await ensureSchema()
+  const r = await pool().query(
+    `SELECT id, name, email, phone, created_at, updated_at FROM accounts ORDER BY created_at DESC`,
+  )
+  return r.rows as ClientRow[]
+}
+
+export async function deleteAccount(id: string): Promise<void> {
+  await ensureSchema()
+  await pool().query(`DELETE FROM accounts WHERE id = $1`, [id])
 }
 
 export interface ClientInput {

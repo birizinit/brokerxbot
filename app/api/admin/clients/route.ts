@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import type { NextRequest } from "next/server"
-import { listClients, deleteClient } from "@/lib/db"
+import { listAccounts, deleteAccount } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -18,10 +18,10 @@ export async function GET(): Promise<Response> {
   }
 
   try {
-    const clients = await listClients()
+    const clients = await listAccounts()
     return Response.json({ ok: true, clients })
   } catch (error) {
-    console.error("Falha ao listar clientes:", error)
+    console.error("Falha ao listar contas:", error)
     return Response.json({ ok: false, error: "falha ao listar" }, { status: 500 })
   }
 }
@@ -33,10 +33,10 @@ export async function DELETE(request: NextRequest): Promise<Response> {
   if (!id) return Response.json({ ok: false, error: "id ausente" }, { status: 400 })
 
   try {
-    await deleteClient(id)
+    await deleteAccount(id)
     return Response.json({ ok: true })
   } catch (error) {
-    console.error("Falha ao excluir cliente:", error)
+    console.error("Falha ao excluir conta:", error)
     return Response.json({ ok: false, error: "falha ao excluir" }, { status: 500 })
   }
 }
