@@ -8,20 +8,26 @@ import { BellIcon, ArrowUpIcon, ArrowDownIcon, CloseIcon } from "@/components/ic
 interface NotificationBellProps {
   ops: BotOp[]
   riskMessage: string | null
+  notif: Record<string, boolean>
 }
 
 function timeOf(ts: number): string {
   return new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
 }
 
-export function NotificationBell({ ops, riskMessage }: NotificationBellProps) {
+export function NotificationBell({ ops, riskMessage, notif }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
   const [seen, setSeen] = useState(0)
 
+  // Os toggles de Notificações filtram o que aparece aqui.
   const items = useMemo(
-    () => ops.filter((o) => o.status === "won" || o.status === "lost").slice(0, 10),
-    [ops],
+    () =>
+      ops
+        .filter((o) => (o.status === "won" && notif.win) || (o.status === "lost" && notif.loss))
+        .slice(0, 10),
+    [ops, notif.win, notif.loss],
   )
+  const showRisk = riskMessage != null && (notif.stopWin || notif.stopLoss)
   const unread = items.filter((o) => o.time > seen).length
 
   const toggle = () => {
@@ -47,7 +53,7 @@ export function NotificationBell({ ops, riskMessage }: NotificationBellProps) {
               </button>
             </div>
 
-            {riskMessage && (
+            {showRisk && (
               <div className="bell-item risk">
                 <span className="bell-ic warn">!</span>
                 <div className="bell-body">
@@ -57,7 +63,7 @@ export function NotificationBell({ ops, riskMessage }: NotificationBellProps) {
               </div>
             )}
 
-            {items.length === 0 && !riskMessage ? (
+            {items.length === 0 && !showRisk ? (
               <div className="bell-empty">Sem notificações ainda.</div>
             ) : (
               items.map((o) => {

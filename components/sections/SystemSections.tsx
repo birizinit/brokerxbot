@@ -14,21 +14,29 @@ export function ScheduleCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: Se
   }
 
   return (
-    <SectionCard icon={<GearIcon size={16} />} title="Horário de operação" sub="Janela autorizada de execução" visual>
+    <SectionCard icon={<GearIcon size={16} />} title="Horário de operação" sub="Janela autorizada de execução">
       <div className="time-rows">
         <div className="time-row">
           <span className="muted sm">das</span>
-          <input className="input time-input num" type="time" defaultValue="09:00" />
+          <input
+            className="input time-input num"
+            type="time"
+            value={prefs.windowStart}
+            onChange={(e) => setPrefs({ ...prefs, windowStart: e.target.value })}
+          />
           <span className="muted sm">às</span>
-          <input className="input time-input num" type="time" defaultValue="18:00" />
+          <input
+            className="input time-input num"
+            type="time"
+            value={prefs.windowEnd}
+            onChange={(e) => setPrefs({ ...prefs, windowEnd: e.target.value })}
+          />
         </div>
       </div>
-      <button type="button" className="btn btn-ghost add-interval">
-        + Adicionar intervalo
-      </button>
 
       <ToggleRow
         name="Não operar fora dos horários"
+        desc="Quando ligado, o robô só opera na janela e dias marcados"
         on={prefs.scheduleEnabled}
         onChange={(v) => setPrefs({ ...prefs, scheduleEnabled: v })}
       />

@@ -9,6 +9,8 @@ export interface UiPrefs {
   galeOnlyAfterLoss: boolean
   galeRestartAfterWin: boolean
   scheduleEnabled: boolean
+  windowStart: string // "HH:MM"
+  windowEnd: string // "HH:MM"
   days: boolean[]
   notif: Record<string, boolean>
 }
@@ -61,6 +63,8 @@ export const DEFAULT_PREFS: UiPrefs = {
   galeOnlyAfterLoss: true,
   galeRestartAfterWin: true,
   scheduleEnabled: false,
+  windowStart: "09:00",
+  windowEnd: "18:00",
   days: [true, true, true, true, true, false, false],
   notif: allOn(NOTIF_TYPES),
 }

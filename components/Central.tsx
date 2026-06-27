@@ -69,7 +69,12 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     [],
   )
 
-  const runtime = useBot(apiKey, config, active, handleRiskStop)
+  const schedule = useMemo(
+    () => ({ enabled: prefs.scheduleEnabled, start: prefs.windowStart, end: prefs.windowEnd, days: prefs.days }),
+    [prefs.scheduleEnabled, prefs.windowStart, prefs.windowEnd, prefs.days],
+  )
+
+  const runtime = useBot(apiKey, config, active, handleRiskStop, schedule)
   const stats = useMemo(() => computeStats(runtime.ops), [runtime.ops])
   const tick = Math.floor(now / 15000)
 
@@ -193,7 +198,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <span className={`tag-acct ${config.isDemo ? "" : "real"}`}>{config.isDemo ? "DEMO" : "REAL"}</span>
               <span className="num">{balance === null ? "—" : `$ ${money(balance)}`}</span>
             </span>
-            <NotificationBell ops={runtime.ops} riskMessage={riskMessage} />
+            <NotificationBell ops={runtime.ops} riskMessage={riskMessage} notif={prefs.notif} />
             <span className="avatar">{initials(profile.name)}</span>
           </div>
         </header>
@@ -240,6 +245,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               galeStep={runtime.galeStep}
               stats={stats}
               riskMessage={riskMessage}
+              scheduleBlocked={runtime.scheduleBlocked}
             />
           )}
           {tab === "stats" && <StatsTab ops={runtime.ops} stats={stats} />}

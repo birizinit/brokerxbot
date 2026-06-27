@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { openTrade, getTrade } from "@/lib/api"
 import { randomAsset } from "@/lib/assets"
+import { isWithinSchedule, type Schedule } from "@/lib/schedule"
 import type { BotConfig } from "@/lib/storage"
 import type { BotOp, OpStatus } from "@/lib/types"
 
@@ -52,6 +53,7 @@ export interface BotRuntime {
   nextRunAt: number | null
   nextStake: number
   galeStep: number
+  scheduleBlocked: boolean
   clearOps: () => void
 }
 
@@ -65,13 +67,16 @@ export function useBot(
   config: BotConfig,
   active: boolean,
   onRiskStop: (reason: string) => void,
+  schedule: Schedule,
 ): BotRuntime {
   const [ops, setOps] = useState<BotOp[]>([])
   const [nextRunAt, setNextRunAt] = useState<number | null>(null)
   const [nextStake, setNextStake] = useState(config.amount)
   const [galeStep, setGaleStep] = useState(0)
+  const [scheduleBlocked, setScheduleBlocked] = useState(false)
 
   const configRef = useRef(config)
+  const scheduleRef = useRef(schedule)
   const opsRef = useRef<BotOp[]>([])
   const galeStepRef = useRef(0)
   const sorosBankRef = useRef(0)
@@ -92,6 +97,10 @@ export function useBot(
     configRef.current = config
     setNextStake(computeStake())
   }, [config, computeStake])
+
+  useEffect(() => {
+    scheduleRef.current = schedule
+  }, [schedule])
 
   useEffect(() => {
     onRiskStopRef.current = onRiskStop
@@ -202,6 +211,7 @@ export function useBot(
       if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = null
       setNextRunAt(null)
+      setScheduleBlocked(false)
       return
     }
 
@@ -209,6 +219,14 @@ export function useBot(
     let cancelled = false
 
     const runOnce = async () => {
+      // Respeita a janela de operação: fora dela, não opera e re-checa em 30s.
+      if (!isWithinSchedule(scheduleRef.current)) {
+        if (!cancelled) setScheduleBlocked(true)
+        schedule(30_000)
+        return
+      }
+      if (!cancelled) setScheduleBlocked(false)
+
       const c = configRef.current
       const direction = Math.random() < 0.5 ? ("BUY" as const) : ("SELL" as const)
       const asset = randomAsset()
@@ -288,5 +306,5 @@ export function useBot(
     }
   }, [])
 
-  return { ops, nextRunAt, nextStake, galeStep, clearOps }
+  return { ops, nextRunAt, nextStake, galeStep, scheduleBlocked, clearOps }
 }
