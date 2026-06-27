@@ -69,3 +69,9 @@ export async function listClients(): Promise<ClientRow[]> {
   )
   return r.rows as ClientRow[]
 }
+
+/** Remove um cliente pelo id. */
+export async function deleteClient(id: string): Promise<void> {
+  await ensureSchema()
+  await pool().query(`DELETE FROM clients WHERE id = $1`, [id])
+}

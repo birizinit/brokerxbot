@@ -151,9 +151,9 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
           <img src="/logo.png" alt="Logo" />
           <div className="side-brand-txt">
             <span className="bn">
-              NEON<b>BOT</b>
+              SNIPER <b>BOT</b>
             </span>
-            <span className="bt">TRADER PRO</span>
+            <span className="bt">TRADER</span>
           </div>
         </div>
 

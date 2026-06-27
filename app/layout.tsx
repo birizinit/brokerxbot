@@ -24,7 +24,7 @@ const mono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "NEONBOT — Trader Pro",
+  title: "SNIPER BOT — Trader",
   description: "Central de automação de operações na corretora.",
 }
 
