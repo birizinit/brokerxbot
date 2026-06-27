@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { MetricCard } from "@/components/MetricCard"
 import { SequenceDots } from "@/components/SequenceDots"
 import { marketSignal, heatmap } from "@/lib/market"
-import { assetBySymbol } from "@/lib/assets"
+import type { BotConfig } from "@/lib/storage"
 import type { Stats } from "@/lib/types"
 import {
   WalletIcon,
@@ -13,134 +13,258 @@ import {
   DollarIcon,
   TrophyIcon,
   CpuIcon,
-  TargetIcon,
   GridIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  PowerIcon,
 } from "@/components/icons"
 
 interface DashboardTabProps {
   balance: number | null
   stats: Stats
-  opsPerHour: number
+  config: BotConfig
+  patch: (changes: Partial<BotConfig>) => void
+  active: boolean
+  onToggle: () => void
+  activatedAt: number | null
+  now: number
   tick: number
 }
+
+const AMOUNTS = [1, 2, 5, 10, 20, 50, 100]
 
 function money(v: number): string {
   return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function DashboardTab({ balance, stats, opsPerHour, tick }: DashboardTabProps) {
+function uptime(activatedAt: number | null, now: number): string {
+  if (!activatedAt) return "00h 00min"
+  const s = Math.max(0, Math.floor((now - activatedAt) / 1000))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}min`
+}
+
+export function DashboardTab({
+  balance,
+  stats,
+  config,
+  patch,
+  active,
+  onToggle,
+  activatedAt,
+  now,
+  tick,
+}: DashboardTabProps) {
   const signal = useMemo(() => marketSignal(tick), [tick])
   const cells = useMemo(() => heatmap(tick), [tick])
-  const sugAsset = signal.suggestionAsset
+  const intelConf = Math.min(99, signal.confidence + 4)
+  const favorable = signal.confidence >= 82
 
   return (
     <div className="tab-stack">
+      {/* Métricas */}
       <section className="grid metrics-grid">
         <MetricCard
-          icon={<WalletIcon size={16} />}
+          icon={<WalletIcon size={17} />}
           label="Saldo corretora"
           value={balance === null ? "—" : `$ ${money(balance)}`}
+          sub={<span className="faint">Atualizado agora</span>}
         />
-        <MetricCard icon={<BoltIcon size={16} />} label="Ops por hora" value={String(opsPerHour)} />
-        <MetricCard icon={<ActivityIcon size={16} />} label="Ops enviadas" value={String(stats.sent)} />
         <MetricCard
-          icon={<DollarIcon size={16} />}
+          icon={<BoltIcon size={17} />}
+          label="Ops por hora"
+          value={String(config.opsPerHour)}
+          sub={<span className="faint">Ritmo configurado</span>}
+        />
+        <MetricCard
+          icon={<ActivityIcon size={17} />}
+          label="Ops enviadas"
+          value={String(stats.sent)}
+          sub={<span className="faint">Hoje</span>}
+        />
+        <MetricCard
+          icon={<DollarIcon size={17} />}
           label="Lucro do dia"
           value={`${stats.dayPnl >= 0 ? "+" : ""}$ ${money(stats.dayPnl)}`}
           tone={stats.dayPnl > 0 ? "up" : stats.dayPnl < 0 ? "down" : "default"}
           sub={<span className={stats.roi >= 0 ? "up" : "down"}>{stats.roi >= 0 ? "+" : ""}{stats.roi}% ROI</span>}
         />
         <MetricCard
-          icon={<TrophyIcon size={16} />}
+          icon={<TrophyIcon size={17} />}
           label="Assertividade"
           value={`${stats.winRate}%`}
           tone={stats.winRate >= 50 ? "up" : stats.winRate > 0 ? "down" : "default"}
           sub={
             <span className="faint">
-              <span className="up">{stats.wins}V</span> · <span className="down">{stats.losses}D</span>
+              <span className="up">{stats.wins}W</span> · <span className="down">{stats.losses}L</span>
             </span>
           }
         />
       </section>
 
-      <section className="grid dash-grid">
+      {/* Sequência + Status do mercado */}
+      <section className="grid two-grid">
         <div className="card pad">
-          <div className="card-head">
-            <h3>Sequência atual</h3>
-            <span className={`streak-badge ${stats.streak >= 0 ? "up" : "down"}`}>
-              {stats.streak > 0
-                ? `${stats.streak} vitórias seguidas`
-                : stats.streak < 0
-                  ? `${Math.abs(stats.streak)} derrotas seguidas`
-                  : "neutro"}
-            </span>
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Sequência atual</h3>
+              <span className="sub">Últimas operações</span>
+            </div>
+            <ActivityIcon size={18} className="accent" />
           </div>
           <SequenceDots recent={stats.recent} />
+          <div className="seq-foot">
+            <span className="muted">
+              {stats.streak >= 0 ? "Wins consecutivos" : "Perdas consecutivas"}
+            </span>
+            <span className="disp big-num accent">{Math.abs(stats.streak)}</span>
+          </div>
         </div>
 
-        <div className="card pad intel">
-          <div className="card-head">
-            <h3>
-              <CpuIcon size={15} /> Inteligência de mercado
-            </h3>
-            <span className="sim-tag">simulado</span>
+        <div className="card pad">
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Status do mercado</h3>
+              <span className="sub">Análise em tempo real</span>
+            </div>
+            <ActivityIcon size={18} className="accent" />
           </div>
-          <div className="intel-rows">
-            <div className="intel-row">
-              <span className="muted">Confiança</span>
+          <span className={`market-pill ${favorable ? "good" : "neutral"}`}>
+            <span className="d" /> {favorable ? "Mercado favorável" : "Mercado neutro"}
+          </span>
+          <div className="market-cols">
+            <div>
+              <span className="lab">Confiança</span>
+              <div className="disp big-num">{signal.confidence}%</div>
               <div className="bar">
                 <span style={{ width: `${signal.confidence}%` }} />
               </div>
-              <span className="num accent">{signal.confidence}%</span>
             </div>
-            <div className="intel-row">
-              <span className="muted">
-                <TargetIcon size={14} /> Probabilidade
-              </span>
-              <div className="bar">
-                <span style={{ width: `${signal.probability}%` }} />
+            <div>
+              <span className="lab">Tendência</span>
+              <div className={`disp big-num ${signal.trendUp ? "up" : "down"}`}>
+                {signal.trendUp ? "Alta" : "Baixa"} {signal.trendUp ? <ArrowUpIcon size={20} /> : <ArrowDownIcon size={20} />}
               </div>
-              <span className="num accent">{signal.probability}%</span>
-            </div>
-          </div>
-          <div className="suggestion">
-            <div className={`sug-dir ${signal.trendUp ? "up" : "down"}`}>
-              {signal.trendUp ? <ArrowUpIcon size={16} /> : <ArrowDownIcon size={16} />}
-              Tendência {signal.trendUp ? "de alta" : "de baixa"} · {signal.timeframes} timeframes
-            </div>
-            <div className="sug-op">
-              <span className="cell-asset">
-                {sugAsset.logo && <img src={sugAsset.logo} alt="" />}
-                <span className="num">{sugAsset.symbol.replace("USDT", "")}</span>
-              </span>
-              <span className={`op-badge ${signal.suggestionDirection === "CALL" ? "up" : "down"}`}>
-                {signal.suggestionDirection}
-              </span>
+              <span className="faint sm">Confirmada em {signal.timeframes} timeframes</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="card pad">
-        <div className="card-head">
-          <h3>
-            <GridIcon size={15} /> Heatmap de ativos
-          </h3>
-          <span className="sim-tag">tempo real (simulado)</span>
+      {/* Power + Inteligência + Heatmap */}
+      <section className="grid power-grid">
+        <div className="card pad power-card">
+          <button type="button" className={`power-orb ${active ? "on" : ""}`} onClick={onToggle} aria-label={active ? "Desativar" : "Ativar"}>
+            <PowerIcon size={46} strokeWidth={2} />
+          </button>
+          <div className={`power-state ${active ? "on" : ""}`}>
+            <span className="d" /> {active ? "ATIVO" : "PARADO"}
+          </div>
+          <span className="lab">Tempo ligado</span>
+          <div className="disp uptime">{active ? uptime(activatedAt, now) : "00h 00min"}</div>
         </div>
-        <div className="heat">
-          {cells.map((c) => (
-            <div key={c.asset.symbol} className="heat-cell" data-state={c.state}>
-              {c.asset.logo && <img src={c.asset.logo} alt="" />}
-              <span className="num heat-sym">{c.asset.symbol.replace("USDT", "")}</span>
-              <span className={`num heat-chg ${c.change >= 0 ? "up" : "down"}`}>
-                {c.change >= 0 ? "+" : ""}
-                {c.change}%
+
+        <div className="card pad">
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Inteligência do mercado</h3>
+              <span className="sub">Análise IA · simulado</span>
+            </div>
+            <CpuIcon size={18} className="accent" />
+          </div>
+          <div className="intel-quad">
+            <div className="iq">
+              <span className="lab">Confiança</span>
+              <span className="disp big-num accent">{intelConf}%</span>
+            </div>
+            <div className="iq">
+              <span className="lab">Prob. acerto</span>
+              <span className="disp big-num accent">{signal.probability}%</span>
+            </div>
+            <div className="iq">
+              <span className="lab">Mercado</span>
+              <span className={`disp md ${favorable ? "up" : "down"}`}>{favorable ? "Favorável" : "Neutro"}</span>
+            </div>
+            <div className="iq">
+              <span className="lab">Ativo</span>
+              <span className="disp md">{signal.suggestionAsset.symbol.replace("USDT", "")}/USD</span>
+            </div>
+          </div>
+          <div className="sug">
+            <div>
+              <span className="lab">Operação sugerida</span>
+              <span className="disp md">
+                {signal.suggestionDirection} · {signal.suggestionAsset.symbol.replace("USDT", "")}/USD
               </span>
             </div>
-          ))}
+            <span className={`op-badge ${signal.suggestionDirection === "CALL" ? "up" : "down"}`}>
+              {signal.suggestionDirection}
+            </span>
+          </div>
+        </div>
+
+        <div className="card pad">
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Heatmap de ativos</h3>
+              <span className="sub">Condição instantânea · simulado</span>
+            </div>
+            <GridIcon size={18} className="accent" />
+          </div>
+          <div className="heat">
+            {cells.map((c) => (
+              <div key={c.asset.symbol} className="heat-cell" data-state={c.state}>
+                <span className="num heat-sym">{c.asset.symbol.replace("USDT", "")}</span>
+                <span className="heat-dot" data-state={c.state} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Operações por hora + Valor */}
+      <section className="grid two-grid">
+        <div className="card pad">
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Operações por hora</h3>
+              <span className="sub">Ritmo do robô</span>
+            </div>
+          </div>
+          <div className="ops-head">
+            <span className="disp big-num accent">{config.opsPerHour}</span>
+            <span className="faint sm">≈ 1 operação a cada {Math.max(2, Math.round(3600 / config.opsPerHour))} s</span>
+          </div>
+          <input
+            className="range"
+            type="range"
+            min={1}
+            max={60}
+            value={config.opsPerHour}
+            onChange={(e) => patch({ opsPerHour: Number(e.target.value) })}
+          />
+          <div className="range-scale">
+            <span>1</span>
+            <span>30</span>
+            <span>60</span>
+          </div>
+        </div>
+
+        <div className="card pad">
+          <div className="card-head col">
+            <div>
+              <h3 className="disp-title">Valor por operação</h3>
+              <span className="sub">Entrada padrão</span>
+            </div>
+          </div>
+          <div className="amount-grid">
+            {AMOUNTS.map((a) => (
+              <button key={a} className="amount-btn" data-on={config.amount === a} onClick={() => patch({ amount: a })}>
+                ${a}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
     </div>

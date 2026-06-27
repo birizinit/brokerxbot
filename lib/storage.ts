@@ -29,6 +29,7 @@ const KEYS = {
   profile: "bo_profile",
   botConfig: "bo_bot_config",
   botActive: "bo_bot_active",
+  botActivatedAt: "bo_bot_activated_at",
   termsAccepted: "bo_terms_accepted",
 } as const
 
@@ -78,6 +79,10 @@ export const storage = {
 
   getBotActive: () => read<boolean>(KEYS.botActive) ?? false,
   setBotActive: (value: boolean) => write(KEYS.botActive, value),
+
+  getBotActivatedAt: () => read<number>(KEYS.botActivatedAt),
+  setBotActivatedAt: (value: number | null) =>
+    value == null ? remove(KEYS.botActivatedAt) : write(KEYS.botActivatedAt, value),
 
   getTermsAccepted: () => read<boolean>(KEYS.termsAccepted) ?? false,
   setTermsAccepted: (value: boolean) => write(KEYS.termsAccepted, value),
