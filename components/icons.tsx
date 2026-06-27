@@ -299,6 +299,23 @@ export function ChevronDownIcon({ size, className, strokeWidth }: IconProps) {
   )
 }
 
+export function BellIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" />
+      <path d="M10.5 19a1.8 1.8 0 0 0 3 0" />
+    </svg>
+  )
+}
+
+export function ChevronLeftIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  )
+}
+
 export function AlertIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">

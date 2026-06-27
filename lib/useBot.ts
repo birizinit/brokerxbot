@@ -168,9 +168,13 @@ export function useBot(
       })
 
       if (status === "lost") {
-        galeStepRef.current = Math.min(galeStepRef.current + 1, configRef.current.galeMaxSteps)
+        // Gale: sobe um degrau (só conta quando habilitado); zera o Soros.
+        if (configRef.current.galeEnabled) {
+          galeStepRef.current = Math.min(galeStepRef.current + 1, configRef.current.galeMaxSteps)
+        }
         sorosBankRef.current = 0
       } else if (status === "won") {
+        // Vitória zera o Gale e, no Soros, acumula o lucro para reinvestir.
         galeStepRef.current = 0
         if (configRef.current.sorosEnabled) {
           sorosBankRef.current = round2(sorosBankRef.current + Math.max(0, r.pnl))

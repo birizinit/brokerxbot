@@ -12,7 +12,8 @@ import { RoboTab } from "@/components/tabs/RoboTab"
 import { StatsTab } from "@/components/tabs/StatsTab"
 import { RiskTab } from "@/components/tabs/RiskTab"
 import { SettingsTab } from "@/components/tabs/SettingsTab"
-import { GridIcon, RobotIcon, ChartIcon, ShieldIcon, GearIcon, BoltIcon } from "@/components/icons"
+import { NotificationBell } from "@/components/NotificationBell"
+import { GridIcon, RobotIcon, ChartIcon, ShieldIcon, GearIcon, BoltIcon, ChevronLeftIcon } from "@/components/icons"
 
 interface CentralProps {
   apiKey: string
@@ -48,6 +49,9 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const [tab, setTab] = useState<TabId>("dashboard")
   const [termsOpen, setTermsOpen] = useState(false)
   const [riskMessage, setRiskMessage] = useState<string | null>(null)
+  const [collapsed, setCollapsed] = useState<boolean>(() => storage.getSidebarCollapsed())
+
+  useEffect(() => storage.setSidebarCollapsed(collapsed), [collapsed])
 
   const handleRiskStop = useMemo(
     () => (reason: string) => {
@@ -120,8 +124,8 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const current = TABS.find((t) => t.id === tab) ?? TABS[0]
 
   return (
-    <div className="app">
-      <aside className="sidebar">
+    <div className="app" data-collapsed={collapsed}>
+      <aside className="sidebar" data-collapsed={collapsed}>
         <div className="side-brand">
           <img src="/logo.png" alt="Logo" />
           <div className="side-brand-txt">
@@ -145,8 +149,17 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
         <div className="side-foot">
           <span className="online">
             <span className="dot" data-on={active} />
-            {active ? "Robô online" : "Robô pausado"}
+            {!collapsed && (active ? "Robô online" : "Robô pausado")}
           </span>
+          <button
+            className="collapse-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            title={collapsed ? "Expandir" : "Recolher"}
+          >
+            <ChevronLeftIcon size={16} className="cev" />
+            {!collapsed && <span>Recolher</span>}
+          </button>
         </div>
       </aside>
 
@@ -164,6 +177,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <span className={`tag-acct ${config.isDemo ? "" : "real"}`}>{config.isDemo ? "DEMO" : "REAL"}</span>
               <span className="num">{balance === null ? "—" : `$ ${money(balance)}`}</span>
             </span>
+            <NotificationBell ops={runtime.ops} riskMessage={riskMessage} />
             <span className="avatar">{initials(profile.name)}</span>
           </div>
         </header>

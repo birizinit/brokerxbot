@@ -31,6 +31,7 @@ const KEYS = {
   botActive: "bo_bot_active",
   botActivatedAt: "bo_bot_activated_at",
   termsAccepted: "bo_terms_accepted",
+  sidebarCollapsed: "bo_sidebar_collapsed",
 } as const
 
 export const DEFAULT_BOT_CONFIG: BotConfig = {
@@ -86,4 +87,7 @@ export const storage = {
 
   getTermsAccepted: () => read<boolean>(KEYS.termsAccepted) ?? false,
   setTermsAccepted: (value: boolean) => write(KEYS.termsAccepted, value),
+
+  getSidebarCollapsed: () => read<boolean>(KEYS.sidebarCollapsed) ?? false,
+  setSidebarCollapsed: (value: boolean) => write(KEYS.sidebarCollapsed, value),
 }
