@@ -27,6 +27,19 @@ function authHeaders(apiKey: string): HeadersInit {
   return { "api-token": apiKey }
 }
 
+/** Salva o cliente (lead do onboarding) no banco. Falha silenciosa. */
+export async function saveClient(client: { name: string; email: string; phone: string }): Promise<void> {
+  try {
+    await fetch("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(client),
+    })
+  } catch {
+    /* não bloqueia o onboarding se o banco estiver indisponível */
+  }
+}
+
 /** Valida a chave API tentando listar as wallets do usuário. */
 export async function validateKey(apiKey: string): Promise<KeyCheck> {
   try {

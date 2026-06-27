@@ -5,6 +5,7 @@ import { LoginScreen } from "@/components/LoginScreen"
 import { Onboarding } from "@/components/Onboarding"
 import { Central } from "@/components/Central"
 import { storage, type Profile } from "@/lib/storage"
+import { saveClient } from "@/lib/api"
 
 type Stage = "loading" | "login" | "onboarding" | "central"
 
@@ -48,6 +49,8 @@ export default function Page() {
     storage.setProfile(data)
     setProfile(data)
     setStage("central")
+    // Persiste o cliente no banco (não bloqueia o fluxo).
+    void saveClient(data)
   }
 
   const handleLogout = () => {
