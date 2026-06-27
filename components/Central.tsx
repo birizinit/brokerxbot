@@ -4,19 +4,15 @@ import { useEffect, useMemo, useState } from "react"
 import type { Profile, BotConfig } from "@/lib/storage"
 import { storage } from "@/lib/storage"
 import { getWallets, sumBalance } from "@/lib/api"
-import { ASSETS, assetBySymbol } from "@/lib/assets"
 import { useBot } from "@/lib/useBot"
+import { computeStats } from "@/lib/stats"
 import { TermsModal } from "@/components/TermsModal"
-import {
-  PowerIcon,
-  WalletIcon,
-  BoltIcon,
-  ActivityIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  LogoutIcon,
-  InfoIcon,
-} from "@/components/icons"
+import { DashboardTab } from "@/components/tabs/DashboardTab"
+import { RoboTab } from "@/components/tabs/RoboTab"
+import { StatsTab } from "@/components/tabs/StatsTab"
+import { RiskTab } from "@/components/tabs/RiskTab"
+import { SettingsTab } from "@/components/tabs/SettingsTab"
+import { GridIcon, RobotIcon, ChartIcon, ShieldIcon, GearIcon } from "@/components/icons"
 
 interface CentralProps {
   apiKey: string
@@ -24,16 +20,18 @@ interface CentralProps {
   onLogout: () => void
 }
 
-const AMOUNTS = [1, 5, 10, 25, 50]
-const MIN_OPS = 1
-const MAX_OPS = 60
+type TabId = "dashboard" | "robo" | "stats" | "manage" | "settings"
 
-function money(value: number): string {
-  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
+const TABS: { id: TabId; label: string; Icon: typeof GridIcon }[] = [
+  { id: "dashboard", label: "Dashboard", Icon: GridIcon },
+  { id: "robo", label: "Robô", Icon: RobotIcon },
+  { id: "stats", label: "Estatísticas", Icon: ChartIcon },
+  { id: "manage", label: "Gerenciamento", Icon: ShieldIcon },
+  { id: "settings", label: "Configurações", Icon: GearIcon },
+]
 
-function timeOf(ts: number): string {
-  return new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+function money(v: number): string {
+  return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function Central({ apiKey, profile, onLogout }: CentralProps) {
@@ -41,15 +39,26 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const [active, setActive] = useState<boolean>(() => storage.getBotActive())
   const [balance, setBalance] = useState<number | null>(null)
   const [now, setNow] = useState<number>(() => Date.now())
+  const [tab, setTab] = useState<TabId>("dashboard")
   const [termsOpen, setTermsOpen] = useState(false)
+  const [riskMessage, setRiskMessage] = useState<string | null>(null)
 
-  const { log, nextRunAt, clearLog } = useBot(apiKey, config, active)
+  const handleRiskStop = useMemo(
+    () => (reason: string) => {
+      setActive(false)
+      setRiskMessage(reason)
+      setTab("robo")
+    },
+    [],
+  )
 
-  // Persiste config e estado — é o que mantém o bot ligado entre recarregamentos.
+  const runtime = useBot(apiKey, config, active, handleRiskStop)
+  const stats = useMemo(() => computeStats(runtime.ops), [runtime.ops])
+  const tick = Math.floor(now / 15000)
+
   useEffect(() => storage.setBotConfig(config), [config])
   useEffect(() => storage.setBotActive(active), [active])
 
-  // Saldo da corretora, com atualização periódica.
   useEffect(() => {
     let alive = true
     const load = async () => {
@@ -57,7 +66,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
         const wallets = await getWallets(apiKey)
         if (alive) setBalance(sumBalance(wallets))
       } catch {
-        /* silencioso: o saldo é informativo */
+        /* informativo */
       }
     }
     load()
@@ -66,9 +75,8 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       alive = false
       clearInterval(id)
     }
-  }, [apiKey])
+  }, [apiKey, runtime.ops.length])
 
-  // Relógio de 1s para o contador da próxima operação.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
@@ -81,231 +89,76 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       setActive(false)
       return
     }
-    // Ativar sempre passa pelo termo de aceite.
     setTermsOpen(true)
   }
 
   const acceptTerms = () => {
     storage.setTermsAccepted(true)
     setTermsOpen(false)
+    setRiskMessage(null)
     setActive(true)
   }
 
-  const okCount = useMemo(() => log.filter((e) => e.status === "ok").length, [log])
-
-  const countdown = useMemo(() => {
-    if (!active || !nextRunAt) return null
-    const secs = Math.max(0, Math.ceil((nextRunAt - now) / 1000))
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-  }, [active, nextRunAt, now])
-
   return (
-    <div className="central">
-      <header className="topbar">
-        <div className="brand">
-          <img src="/logo.png" alt="Logo" />
-          <span className="brand-name">
-            Central<b>.</b>
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="who">
-            <div style={{ fontWeight: 700, fontSize: 14 }}>{profile.name}</div>
-            <small>{profile.email}</small>
+    <div className="app">
+      <header className="navbar">
+        <div className="nav-inner">
+          <div className="brand">
+            <img src="/logo.png" alt="Logo" />
+            <span className="brand-name">
+              Broker<b>X</b>
+            </span>
+            <span className="pro-tag">TRADER</span>
           </div>
-          <button className="icon-btn" onClick={onLogout} aria-label="Sair" title="Sair">
-            <LogoutIcon size={18} />
-          </button>
+
+          <nav className="tabs">
+            {TABS.map(({ id, label, Icon }) => (
+              <button key={id} className="tab" data-on={tab === id} onClick={() => setTab(id)}>
+                <Icon size={16} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="nav-right">
+            <span className="online">
+              <span className="dot" data-on={active} />
+              {active ? "Online" : "Pausado"}
+            </span>
+            <span className="nav-balance num">{balance === null ? "—" : `$ ${money(balance)}`}</span>
+          </div>
         </div>
       </header>
 
-      <section className="grid stat-grid">
-        <div className="card stat">
-          <div className="lab">
-            <WalletIcon size={16} /> Saldo na corretora
-          </div>
-          <div className="val num">{balance === null ? "—" : `$ ${money(balance)}`}</div>
-        </div>
-        <div className="card stat">
-          <div className="lab">
-            <BoltIcon size={16} /> Operações por hora
-          </div>
-          <div className="val num">{config.opsPerHour}</div>
-        </div>
-        <div className="card stat">
-          <div className="lab">
-            <ActivityIcon size={16} /> Enviadas com sucesso
-          </div>
-          <div className="val num">{okCount}</div>
-        </div>
-      </section>
-
-      <div className="grid main-grid">
-        {/* Painel de ligar/desligar */}
-        <div className="card bot-panel card-glow">
-          <div className="bot-status">
-            <h3>Robô de operações</h3>
-            <span className="status-pill" data-on={active}>
-              <span className="dot" data-on={active} />
-              {active ? "Ativo" : "Inativo"}
-            </span>
-          </div>
-
-          <button type="button" className="power-btn" data-on={active} onClick={handleToggle}>
-            <span className="ring">
-              <PowerIcon size={18} />
-            </span>
-            {active ? "Desativar robô" : "Ativar robô"}
-          </button>
-
-          {active && countdown && (
-            <div className="note" style={{ marginTop: 14 }}>
-              <ActivityIcon size={16} />
-              <span>
-                Próxima operação em <b className="num accent">{countdown}</b> — ritmo de{" "}
-                {config.opsPerHour}/h, ativos conforme o movimento do mercado.
-              </span>
-            </div>
-          )}
-
-          <div className="note">
-            <InfoIcon size={16} />
-            <span>
-              O robô permanece ligado até você desativar manualmente. Ele não se desliga sozinho — se
-              ficar ligado, segue operando.
-            </span>
-          </div>
-        </div>
-
-        {/* Configuração */}
-        <div className="card config">
-          <h3>Configuração</h3>
-
-          <div className="config-row">
-            <div className="head">
-              <span className="k">Operações por hora</span>
-              <span className="v num accent">{config.opsPerHour}</span>
-            </div>
-            <input
-              className="range"
-              type="range"
-              min={MIN_OPS}
-              max={MAX_OPS}
-              value={config.opsPerHour}
-              onChange={(e) => patch({ opsPerHour: Number(e.target.value) })}
-            />
-            <span className="hint">
-              Aproximadamente 1 operação a cada{" "}
-              {Math.max(2, Math.round(3600 / config.opsPerHour))} segundos.
-            </span>
-          </div>
-
-          <div className="config-row">
-            <div className="head">
-              <span className="k">Valor por operação</span>
-              <span className="v num">$ {config.amount}</span>
-            </div>
-            <div className="chips">
-              {AMOUNTS.map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  className="chip"
-                  data-on={config.amount === a}
-                  onClick={() => patch({ amount: a })}
-                >
-                  ${a}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="config-row">
-            <div className="head">
-              <span className="k">Ativos</span>
-              <span className="hint">Escolhidos conforme o movimento do mercado</span>
-            </div>
-            <div className="asset-row">
-              {ASSETS.map((a) => (
-                <span className="asset-coin" key={a.symbol} title={a.name}>
-                  <img src={a.logo} alt={a.name} />
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="config-row">
-            <div className="head">
-              <span className="k">Tipo de conta</span>
-            </div>
-            <div className="seg">
-              <button type="button" data-on={config.isDemo} onClick={() => patch({ isDemo: true })}>
-                Demo
-              </button>
-              <button type="button" data-on={!config.isDemo} onClick={() => patch({ isDemo: false })}>
-                Real
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Log de operações */}
-      <div className="card log-card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ marginBottom: 0 }}>Histórico de operações</h3>
-          {log.length > 0 && (
-            <button className="chip" type="button" onClick={clearLog}>
-              Limpar
-            </button>
-          )}
-        </div>
-
-        <div className="log" style={{ marginTop: 18 }}>
-          {log.length === 0 ? (
-            <div className="log-empty">
-              Nenhuma operação ainda. Ative o robô para começar a operar.
-            </div>
-          ) : (
-            log.map((e) => {
-              const asset = assetBySymbol(e.symbol)
-              const isBuy = e.direction === "BUY"
-              return (
-                <div className="log-item" key={e.id}>
-                  <span className="coin">
-                    {asset.logo ? <img src={asset.logo} alt={asset.name} /> : null}
-                    <span className="coin-dir" data-dir={e.direction}>
-                      {isBuy ? <ArrowUpIcon size={11} strokeWidth={2.6} /> : <ArrowDownIcon size={11} strokeWidth={2.6} />}
-                    </span>
-                  </span>
-                  <div className="log-body">
-                    <div className="l1">
-                      <span>{asset.name}</span>
-                      <span className="faint num" style={{ fontSize: 12 }}>
-                        {e.symbol}
-                      </span>
-                      <span className="tag" data-kind={e.status}>
-                        {e.status === "ok" ? "OK" : "Erro"}
-                      </span>
-                      {e.isDemo && (
-                        <span className="tag" data-kind="demo">
-                          Demo
-                        </span>
-                      )}
-                    </div>
-                    <div className="l2">
-                      {timeOf(e.time)} · {isBuy ? "Compra" : "Venda"} · {e.message}
-                    </div>
-                  </div>
-                  <span className={`log-amt num ${isBuy ? "up" : "down"}`}>$ {e.amount}</span>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </div>
+      <main className="content">
+        {tab === "dashboard" && (
+          <DashboardTab balance={balance} stats={stats} opsPerHour={config.opsPerHour} tick={tick} />
+        )}
+        {tab === "robo" && (
+          <RoboTab
+            active={active}
+            onToggle={handleToggle}
+            nextRunAt={runtime.nextRunAt}
+            now={now}
+            nextStake={runtime.nextStake}
+            galeStep={runtime.galeStep}
+            config={config}
+            stats={stats}
+            riskMessage={riskMessage}
+          />
+        )}
+        {tab === "stats" && <StatsTab ops={runtime.ops} stats={stats} />}
+        {tab === "manage" && <RiskTab config={config} patch={patch} galeStep={runtime.galeStep} />}
+        {tab === "settings" && (
+          <SettingsTab
+            config={config}
+            patch={patch}
+            profile={profile}
+            onLogout={onLogout}
+            onOpenTerms={() => setTermsOpen(true)}
+          />
+        )}
+      </main>
 
       <TermsModal
         open={termsOpen}

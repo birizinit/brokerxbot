@@ -192,6 +192,113 @@ export function ShieldIcon({ size, className, strokeWidth }: IconProps) {
   )
 }
 
+export function GridIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+    </svg>
+  )
+}
+
+export function RobotIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <rect x="4" y="8" width="16" height="11" rx="3" />
+      <path d="M12 4v4" />
+      <circle cx="12" cy="3" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="13" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13" r="1.3" fill="currentColor" stroke="none" />
+      <path d="M9.5 16.5h5" />
+      <path d="M1.5 12v3M22.5 12v3" />
+    </svg>
+  )
+}
+
+export function ChartIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M4 4v16h16" />
+      <path d="M7 14l3-4 3 2 4-6" />
+    </svg>
+  )
+}
+
+export function GearIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19" />
+    </svg>
+  )
+}
+
+export function CpuIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+      <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
+      <path d="M9 2.5v2M15 2.5v2M9 19.5v2M15 19.5v2M2.5 9h2M2.5 15h2M19.5 9h2M19.5 15h2" />
+    </svg>
+  )
+}
+
+export function TargetIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function TrophyIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3" />
+      <path d="M12 13v3M9 20h6M10 20l.5-4M14 20l-.5-4" />
+    </svg>
+  )
+}
+
+export function LayersIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+      <path d="M3 13l9 5 9-5" />
+    </svg>
+  )
+}
+
+export function FlameIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M12 3c1.5 3 4.5 4.5 4.5 8a4.5 4.5 0 0 1-9 0c0-1.2.4-2.2 1-3 .2 1 .8 1.6 1.5 1.8C9.7 8 11 6 12 3Z" />
+    </svg>
+  )
+}
+
+export function DollarIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="M12 2.5v19" />
+      <path d="M16 6.5c-1-1.2-2.5-1.8-4-1.8-2.2 0-3.8 1.2-3.8 3 0 4 8 2.2 8 6.2 0 1.9-1.7 3.2-4.2 3.2-1.7 0-3.3-.7-4.2-2" />
+    </svg>
+  )
+}
+
+export function ChevronDownIcon({ size, className, strokeWidth }: IconProps) {
+  return (
+    <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
 export function AlertIcon({ size, className, strokeWidth }: IconProps) {
   return (
     <svg {...base(size, strokeWidth)} className={className} aria-hidden="true">

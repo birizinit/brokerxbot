@@ -1,6 +1,8 @@
 // Cliente de API usado pelo browser. Fala apenas com as nossas rotas
 // internas (/api/*), que por sua vez encaminham para a corretora.
 
+import type { TradeResult } from "@/lib/types"
+
 export interface Wallet {
   id: string
   type: string
@@ -65,11 +67,15 @@ export function sumBalance(wallets: Wallet[], type?: string): number {
     .reduce((total, w) => total + (w.balance ?? 0), 0)
 }
 
-/** Abre uma operação na corretora. Lança em caso de erro HTTP. */
-export async function openTrade(
-  apiKey: string,
-  payload: OpenTradePayload,
-): Promise<{ ok: boolean; status: number; body: unknown }> {
+export interface OpenResult {
+  ok: boolean
+  status: number
+  tradeId: string | null
+  closeTime: number | null
+}
+
+/** Abre uma operação na corretora e devolve o id e o horário de fechamento. */
+export async function openTrade(apiKey: string, payload: OpenTradePayload): Promise<OpenResult> {
   const body = JSON.stringify({
     symbol: payload.symbol,
     direction: payload.direction,
@@ -85,12 +91,38 @@ export async function openTrade(
     body,
   })
 
-  let parsed: unknown = null
+  let parsed: { id?: string; closeTime?: number } | null = null
   try {
     parsed = await res.json()
   } catch {
     parsed = null
   }
 
-  return { ok: res.ok, status: res.status, body: parsed }
+  return {
+    ok: res.ok,
+    status: res.status,
+    tradeId: parsed?.id ?? null,
+    closeTime: parsed?.closeTime ?? null,
+  }
+}
+
+/** Consulta o resultado de um trade pelo id (após o fechamento). */
+export async function getTrade(apiKey: string, id: string): Promise<TradeResult | null> {
+  try {
+    const res = await fetch(`/api/trade?id=${encodeURIComponent(id)}`, { headers: authHeaders(apiKey) })
+    if (!res.ok) return null
+    const t = await res.json()
+    const wallet = Array.isArray(t.wallets) ? t.wallets[0] : null
+    return {
+      status: t.status ?? "",
+      result: t.result ?? "",
+      pnl: typeof t.pnl === "number" ? t.pnl : (wallet?.pnl ?? 0),
+      balance: wallet?.balance ?? null,
+      openPrice: t.openPrice ?? null,
+      closePrice: t.closePrice ?? null,
+      closeTime: t.closeTime ?? null,
+    }
+  } catch {
+    return null
+  }
 }

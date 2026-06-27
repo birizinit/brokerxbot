@@ -12,6 +12,16 @@ export interface BotConfig {
   opsPerHour: number
   amount: number
   isDemo: boolean
+  // Sistema de Gale (martingale): ao perder, multiplica o valor da próxima.
+  galeEnabled: boolean
+  galeMultiplier: number
+  galeMaxSteps: number
+  // Sistema de Soros: reinveste o lucro nas operações seguintes ganhas.
+  sorosEnabled: boolean
+  sorosLevels: number
+  // Gerenciamento de risco (0 = desligado). Quando atingido, o robô para.
+  stopWin: number
+  stopLoss: number
 }
 
 const KEYS = {
@@ -26,6 +36,13 @@ export const DEFAULT_BOT_CONFIG: BotConfig = {
   opsPerHour: 6,
   amount: 5,
   isDemo: true,
+  galeEnabled: false,
+  galeMultiplier: 2,
+  galeMaxSteps: 2,
+  sorosEnabled: false,
+  sorosLevels: 2,
+  stopWin: 0,
+  stopLoss: 0,
 }
 
 function read<T>(key: string): T | null {
@@ -56,7 +73,7 @@ export const storage = {
   getProfile: () => read<Profile>(KEYS.profile),
   setProfile: (value: Profile) => write(KEYS.profile, value),
 
-  getBotConfig: () => read<BotConfig>(KEYS.botConfig) ?? DEFAULT_BOT_CONFIG,
+  getBotConfig: (): BotConfig => ({ ...DEFAULT_BOT_CONFIG, ...(read<Partial<BotConfig>>(KEYS.botConfig) ?? {}) }),
   setBotConfig: (value: BotConfig) => write(KEYS.botConfig, value),
 
   getBotActive: () => read<boolean>(KEYS.botActive) ?? false,
