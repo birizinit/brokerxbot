@@ -2750,6 +2750,236 @@ select {
   font-size: 13px;
 }
 
+/* ============================================================
+   Seções da referência (Robô / Gerenciamento / Configurações)
+   ============================================================ */
+
+.sc-titlewrap {
+  min-width: 0;
+}
+
+.visual-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn);
+  border: 1px solid oklch(83% 0.16 80 / 0.32);
+  background: oklch(83% 0.16 80 / 0.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+.seg.wrap {
+  flex-wrap: wrap;
+}
+
+/* Status do robô */
+
+.robo-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.rs-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.rs-left .uptime {
+  font-size: 22px;
+}
+
+.power-btn.rs-power {
+  width: auto;
+  min-width: 210px;
+  padding: 16px 24px;
+}
+
+/* Perfis rápidos */
+
+.profiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur), background var(--dur);
+}
+
+.profile:hover {
+  border-color: var(--border-strong);
+}
+
+.profile[data-on="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.p-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.p-name {
+  font-weight: 700;
+  font-size: 14.5px;
+}
+
+.p-desc {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.p-applied {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Linhas de toggle */
+
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 2px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle-row:first-child {
+  border-top: none;
+}
+
+.tr-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tr-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.tr-desc {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* Gerenciamento de risco */
+
+.risk-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 680px) {
+  .risk-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input-wrap > .trail {
+  position: absolute;
+  right: 14px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* Horário de operação */
+
+.time-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-input {
+  color-scheme: dark;
+  max-width: 140px;
+}
+
+.add-interval {
+  margin: 12px 0 16px;
+  font-size: 13px;
+  padding: 9px 14px;
+}
+
+.days {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day {
+  flex: 1;
+  min-width: 46px;
+  padding: 9px 0;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color var(--dur), background var(--dur), border-color var(--dur);
+}
+
+.day:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.day[data-on="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(13% 0.005 240);
+}
+
 /* Sidebar responsiva */
 
 @media (max-width: 860px) {

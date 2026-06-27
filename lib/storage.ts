@@ -19,9 +19,11 @@ export interface BotConfig {
   // Sistema de Soros: reinveste o lucro nas operações seguintes ganhas.
   sorosEnabled: boolean
   sorosLevels: number
+  sorosReinvest: number // fração do lucro reinvestida (1 / 0.75 / 0.5)
   // Gerenciamento de risco (0 = desligado). Quando atingido, o robô para.
   stopWin: number
   stopLoss: number
+  dailyTargetPct: number // meta diária em % do saldo (0 = desligado)
 }
 
 const KEYS = {
@@ -43,8 +45,10 @@ export const DEFAULT_BOT_CONFIG: BotConfig = {
   galeMaxSteps: 2,
   sorosEnabled: false,
   sorosLevels: 2,
+  sorosReinvest: 1,
   stopWin: 0,
   stopLoss: 0,
+  dailyTargetPct: 0,
 }
 
 function read<T>(key: string): T | null {

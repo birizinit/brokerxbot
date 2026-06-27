@@ -6,6 +6,7 @@ import { storage } from "@/lib/storage"
 import { getWallets, sumBalance } from "@/lib/api"
 import { useBot } from "@/lib/useBot"
 import { computeStats } from "@/lib/stats"
+import { getPrefs, setPrefs as persistPrefs, type UiPrefs } from "@/lib/prefs"
 import { TermsModal } from "@/components/TermsModal"
 import { DashboardTab } from "@/components/tabs/DashboardTab"
 import { RoboTab } from "@/components/tabs/RoboTab"
@@ -50,8 +51,14 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const [termsOpen, setTermsOpen] = useState(false)
   const [riskMessage, setRiskMessage] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.getSidebarCollapsed())
+  const [prefs, setPrefsState] = useState<UiPrefs>(() => getPrefs())
 
   useEffect(() => storage.setSidebarCollapsed(collapsed), [collapsed])
+
+  const updatePrefs = (p: UiPrefs) => {
+    setPrefsState(p)
+    persistPrefs(p)
+  }
 
   const handleRiskStop = useMemo(
     () => (reason: string) => {
@@ -98,6 +105,15 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       clearInterval(id)
     }
   }, [apiKey, runtime.ops.length])
+
+  // Meta diária: para o robô quando o lucro do dia atinge % do saldo.
+  useEffect(() => {
+    if (!active || config.dailyTargetPct <= 0 || balance == null) return
+    const target = (balance * config.dailyTargetPct) / 100
+    if (target > 0 && stats.dayPnl >= target) {
+      handleRiskStop(`Meta diária atingida (+$${stats.dayPnl.toFixed(2)})`)
+    }
+  }, [active, config.dailyTargetPct, balance, stats.dayPnl, handleRiskStop])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -212,23 +228,37 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
           )}
           {tab === "robo" && (
             <RoboTab
+              config={config}
+              patch={patch}
+              prefs={prefs}
+              setPrefs={updatePrefs}
               active={active}
               onToggle={handleToggle}
-              nextRunAt={runtime.nextRunAt}
+              activatedAt={activatedAt}
               now={now}
               nextStake={runtime.nextStake}
               galeStep={runtime.galeStep}
-              config={config}
               stats={stats}
               riskMessage={riskMessage}
             />
           )}
           {tab === "stats" && <StatsTab ops={runtime.ops} stats={stats} />}
-          {tab === "manage" && <RiskTab config={config} patch={patch} galeStep={runtime.galeStep} />}
+          {tab === "manage" && (
+            <RiskTab
+              config={config}
+              patch={patch}
+              prefs={prefs}
+              setPrefs={updatePrefs}
+              galeStep={runtime.galeStep}
+              balance={balance}
+            />
+          )}
           {tab === "settings" && (
             <SettingsTab
               config={config}
               patch={patch}
+              prefs={prefs}
+              setPrefs={updatePrefs}
               profile={profile}
               onLogout={onLogout}
               onOpenTerms={() => setTermsOpen(true)}

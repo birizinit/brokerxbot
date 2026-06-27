@@ -75,6 +75,7 @@ export function useBot(
   const opsRef = useRef<BotOp[]>([])
   const galeStepRef = useRef(0)
   const sorosBankRef = useRef(0)
+  const sorosWinsRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settleTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
   const onRiskStopRef = useRef(onRiskStop)
@@ -167,17 +168,26 @@ export function useBot(
         message: msg,
       })
 
+      const cfg = configRef.current
       if (status === "lost") {
         // Gale: sobe um degrau (só conta quando habilitado); zera o Soros.
-        if (configRef.current.galeEnabled) {
-          galeStepRef.current = Math.min(galeStepRef.current + 1, configRef.current.galeMaxSteps)
+        if (cfg.galeEnabled) {
+          galeStepRef.current = Math.min(galeStepRef.current + 1, cfg.galeMaxSteps)
         }
         sorosBankRef.current = 0
+        sorosWinsRef.current = 0
       } else if (status === "won") {
-        // Vitória zera o Gale e, no Soros, acumula o lucro para reinvestir.
+        // Vitória zera o Gale; no Soros, reinveste uma fração do lucro até o
+        // limite de níveis, então realiza o lucro e recomeça o ciclo.
         galeStepRef.current = 0
-        if (configRef.current.sorosEnabled) {
-          sorosBankRef.current = round2(sorosBankRef.current + Math.max(0, r.pnl))
+        if (cfg.sorosEnabled) {
+          if (sorosWinsRef.current >= cfg.sorosLevels) {
+            sorosBankRef.current = 0
+            sorosWinsRef.current = 0
+          } else {
+            sorosBankRef.current = round2(sorosBankRef.current + Math.max(0, r.pnl) * cfg.sorosReinvest)
+            sorosWinsRef.current += 1
+          }
         }
       }
       setGaleStep(galeStepRef.current)
