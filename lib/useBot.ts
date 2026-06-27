@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { openTrade, getTrade } from "@/lib/api"
 import { randomAsset } from "@/lib/assets"
 import { isWithinSchedule, type Schedule } from "@/lib/schedule"
+import { computeStake as strategyStake, reduceStrategy, INITIAL_STRATEGY, type StrategyState } from "@/lib/strategy"
 import type { BotConfig } from "@/lib/storage"
 import type { BotOp, OpStatus } from "@/lib/types"
 
@@ -79,9 +80,7 @@ export function useBot(
   const configRef = useRef(config)
   const scheduleRef = useRef(schedule)
   const opsRef = useRef<BotOp[]>([])
-  const galeStepRef = useRef(0)
-  const sorosBankRef = useRef(0)
-  const sorosWinsRef = useRef(0)
+  const strategyRef = useRef<StrategyState>(INITIAL_STRATEGY)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settleTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
   const onRiskStopRef = useRef(onRiskStop)
@@ -89,10 +88,7 @@ export function useBot(
   const stoppedRef = useRef(false)
 
   const computeStake = useCallback((): number => {
-    const c = configRef.current
-    const sorosAdd = c.sorosEnabled ? sorosBankRef.current : 0
-    const galeMult = c.galeEnabled ? Math.pow(c.galeMultiplier, galeStepRef.current) : 1
-    return Math.max(1, round2((c.amount + sorosAdd) * galeMult))
+    return strategyStake(configRef.current, strategyRef.current)
   }, [])
 
   useEffect(() => {
@@ -183,29 +179,14 @@ export function useBot(
         message: msg,
       })
 
-      const cfg = configRef.current
-      if (status === "lost") {
-        // Gale: sobe um degrau (só conta quando habilitado); zera o Soros.
-        if (cfg.galeEnabled) {
-          galeStepRef.current = Math.min(galeStepRef.current + 1, cfg.galeMaxSteps)
-        }
-        sorosBankRef.current = 0
-        sorosWinsRef.current = 0
-      } else if (status === "won") {
-        // Vitória zera o Gale; no Soros, reinveste uma fração do lucro até o
-        // limite de níveis, então realiza o lucro e recomeça o ciclo.
-        galeStepRef.current = 0
-        if (cfg.sorosEnabled) {
-          if (sorosWinsRef.current >= cfg.sorosLevels) {
-            sorosBankRef.current = 0
-            sorosWinsRef.current = 0
-          } else {
-            sorosBankRef.current = round2(sorosBankRef.current + Math.max(0, r.pnl) * cfg.sorosReinvest)
-            sorosWinsRef.current += 1
-          }
-        }
-      }
-      setGaleStep(galeStepRef.current)
+      // Aplica Gale/Soros (lógica pura, compartilhada com os testes).
+      strategyRef.current = reduceStrategy(
+        configRef.current,
+        strategyRef.current,
+        status as "won" | "lost" | "tie",
+        r.pnl ?? 0,
+      )
+      setGaleStep(strategyRef.current.galeStep)
       setNextStake(computeStake())
       checkRisk()
     },
