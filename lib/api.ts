@@ -85,6 +85,7 @@ export interface OpenResult {
   status: number
   tradeId: string | null
   closeTime: number | null
+  error: string | null
 }
 
 /** Abre uma operação na corretora e devolve o id e o horário de fechamento. */
@@ -104,18 +105,23 @@ export async function openTrade(apiKey: string, payload: OpenTradePayload): Prom
     body,
   })
 
-  let parsed: { id?: string; closeTime?: number } | null = null
+  let parsed:
+    | { id?: string; closeTime?: number; message?: string; error?: string; data?: { message?: string } }
+    | null = null
   try {
     parsed = await res.json()
   } catch {
     parsed = null
   }
 
+  const error = res.ok ? null : parsed?.data?.message ?? parsed?.message ?? parsed?.error ?? null
+
   return {
     ok: res.ok,
     status: res.status,
     tradeId: parsed?.id ?? null,
     closeTime: parsed?.closeTime ?? null,
+    error,
   }
 }
 

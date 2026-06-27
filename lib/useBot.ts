@@ -68,6 +68,7 @@ export function useBot(
   active: boolean,
   onRiskStop: (reason: string) => void,
   schedule: Schedule,
+  onReject: (info: { status: number; message: string }) => void,
 ): BotRuntime {
   const [ops, setOps] = useState<BotOp[]>([])
   const [nextRunAt, setNextRunAt] = useState<number | null>(null)
@@ -84,6 +85,7 @@ export function useBot(
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settleTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
   const onRiskStopRef = useRef(onRiskStop)
+  const onRejectRef = useRef(onReject)
   const stoppedRef = useRef(false)
 
   const computeStake = useCallback((): number => {
@@ -105,6 +107,10 @@ export function useBot(
   useEffect(() => {
     onRiskStopRef.current = onRiskStop
   }, [onRiskStop])
+
+  useEffect(() => {
+    onRejectRef.current = onReject
+  }, [onReject])
 
   useEffect(() => {
     const loaded = loadOps()
@@ -272,7 +278,9 @@ export function useBot(
           const t = setTimeout(() => settle(localId, tradeId), delay)
           settleTimers.current.add(t)
         } else {
-          patchOp(localId, { status: "error", message: `Recusada pela corretora (HTTP ${res.status})` })
+          const reason = res.error || `HTTP ${res.status}`
+          patchOp(localId, { status: "error", message: `Recusada pela corretora: ${reason}` })
+          onRejectRef.current({ status: res.status, message: reason })
         }
       } catch {
         if (!cancelled) patchOp(localId, { status: "error", message: "Falha de conexão" })

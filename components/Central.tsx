@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Profile, BotConfig } from "@/lib/storage"
 import { storage } from "@/lib/storage"
 import { getWallets, sumBalance } from "@/lib/api"
@@ -71,12 +71,26 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     [],
   )
 
+  // Recusa da corretora por saldo: para o robô imediatamente.
+  const handleReject = useCallback(
+    (info: { status: number; message: string }) => {
+      const lowBalance = balance != null && balance < config.amount
+      const fundsMsg = /insufficient|insuficiente|saldo|balance|fund/i.test(info.message)
+      if (lowBalance || fundsMsg) {
+        setActive(false)
+        setRiskMessage("Saldo insuficiente — o robô foi parado pela recusa da corretora.")
+        setActivateError("A corretora recusou a operação por saldo insuficiente. O robô foi desativado automaticamente.")
+      }
+    },
+    [balance, config.amount],
+  )
+
   const schedule = useMemo(
     () => ({ enabled: prefs.scheduleEnabled, start: prefs.windowStart, end: prefs.windowEnd, days: prefs.days }),
     [prefs.scheduleEnabled, prefs.windowStart, prefs.windowEnd, prefs.days],
   )
 
-  const runtime = useBot(apiKey, config, active, handleRiskStop, schedule)
+  const runtime = useBot(apiKey, config, active, handleRiskStop, schedule, handleReject)
   const stats = useMemo(() => computeStats(runtime.ops), [runtime.ops])
   const tick = Math.floor(now / 15000)
 
