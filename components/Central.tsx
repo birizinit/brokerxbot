@@ -113,6 +113,19 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     }
   }, [apiKey, runtime.ops.length])
 
+  // Saldo acabou durante a operação: para o robô e avisa.
+  useEffect(() => {
+    if (!active || balance == null) return
+    if (balance < config.amount) {
+      setActive(false)
+      setRiskMessage("Saldo real insuficiente — o robô foi parado automaticamente.")
+      setActivateError(
+        `O saldo da sua conta real (\$ ${money(balance)}) ficou abaixo do valor da entrada (\$ ${money(config.amount)}). ` +
+          `O robô foi desativado automaticamente.`,
+      )
+    }
+  }, [active, balance, config.amount])
+
   // Meta diária: para o robô quando o lucro do dia atinge % do saldo.
   useEffect(() => {
     if (!active || config.dailyTargetPct <= 0 || balance == null) return
