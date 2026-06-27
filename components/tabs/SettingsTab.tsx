@@ -3,13 +3,11 @@
 import { SectionCard } from "@/components/controls"
 import { IndicatorsCard, FiltersCard } from "@/components/sections/TechnicalSections"
 import { ScheduleCard, NotifPrefsCard } from "@/components/sections/SystemSections"
-import type { BotConfig, Profile } from "@/lib/storage"
+import type { Profile } from "@/lib/storage"
 import type { UiPrefs } from "@/lib/prefs"
 import { UserIcon, LogoutIcon, ShieldIcon } from "@/components/icons"
 
 interface SettingsTabProps {
-  config: BotConfig
-  patch: (c: Partial<BotConfig>) => void
   prefs: UiPrefs
   setPrefs: (p: UiPrefs) => void
   profile: Profile
@@ -17,7 +15,7 @@ interface SettingsTabProps {
   onOpenTerms: () => void
 }
 
-export function SettingsTab({ config, patch, prefs, setPrefs, profile, onLogout, onOpenTerms }: SettingsTabProps) {
+export function SettingsTab({ prefs, setPrefs, profile, onLogout, onOpenTerms }: SettingsTabProps) {
   return (
     <div className="tab-stack">
       <section className="grid two-grid">
@@ -41,14 +39,9 @@ export function SettingsTab({ config, patch, prefs, setPrefs, profile, onLogout,
           </div>
           <div className="kv">
             <span className="muted">Tipo de conta</span>
-            <div className="seg">
-              <button data-on={config.isDemo} onClick={() => patch({ isDemo: true })}>
-                Demo
-              </button>
-              <button data-on={!config.isDemo} onClick={() => patch({ isDemo: false })}>
-                Real
-              </button>
-            </div>
+            <span className="accent" style={{ fontWeight: 700 }}>
+              Real
+            </span>
           </div>
         </div>
         <div className="settings-actions">

@@ -42,7 +42,7 @@ function initials(name: string): string {
 }
 
 export function Central({ apiKey, profile, onLogout }: CentralProps) {
-  const [config, setConfig] = useState<BotConfig>(() => storage.getBotConfig())
+  const [config, setConfig] = useState<BotConfig>(() => ({ ...storage.getBotConfig(), isDemo: false }))
   const [active, setActive] = useState<boolean>(() => storage.getBotActive())
   const [activatedAt, setActivatedAt] = useState<number | null>(() => storage.getBotActivatedAt())
   const [balance, setBalance] = useState<number | null>(null)
@@ -98,7 +98,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     const load = async () => {
       try {
         const wallets = await getWallets(apiKey)
-        if (alive) setBalance(sumBalance(wallets))
+        if (alive) setBalance(sumBalance(wallets, "REAL"))
       } catch {
         /* informativo */
       }
@@ -195,7 +195,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <span className="dot" data-on={active} /> {active ? "Online" : "Pausado"}
             </span>
             <span className="acct-balance">
-              <span className={`tag-acct ${config.isDemo ? "" : "real"}`}>{config.isDemo ? "DEMO" : "REAL"}</span>
+              <span className="tag-acct real">REAL</span>
               <span className="num">{balance === null ? "—" : `$ ${money(balance)}`}</span>
             </span>
             <NotificationBell ops={runtime.ops} riskMessage={riskMessage} notif={prefs.notif} />
@@ -209,13 +209,9 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <h1 className="disp page-title">{current.title}</h1>
               <p className="page-sub">{current.sub}</p>
             </div>
-            <button
-              type="button"
-              className={`acct-btn ${config.isDemo ? "" : "real"}`}
-              onClick={() => patch({ isDemo: !config.isDemo })}
-            >
-              <BoltIcon size={15} /> {config.isDemo ? "CONTA DEMO" : "CONTA REAL"}
-            </button>
+            <span className="acct-btn real">
+              <BoltIcon size={15} /> CONTA REAL
+            </span>
           </div>
 
           {tab === "dashboard" && (
@@ -261,8 +257,6 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
           )}
           {tab === "settings" && (
             <SettingsTab
-              config={config}
-              patch={patch}
               prefs={prefs}
               setPrefs={updatePrefs}
               profile={profile}
@@ -273,7 +267,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
         </main>
       </div>
 
-      <TermsModal open={termsOpen} isDemo={config.isDemo} onAccept={acceptTerms} onClose={() => setTermsOpen(false)} />
+      <TermsModal open={termsOpen} isDemo={false} onAccept={acceptTerms} onClose={() => setTermsOpen(false)} />
     </div>
   )
 }

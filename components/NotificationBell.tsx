@@ -83,7 +83,7 @@ export function NotificationBell({ ops, riskMessage, notif }: NotificationBellPr
                         </b>
                       </span>
                       <span className="bell-s">
-                        {timeOf(o.time)} · ${o.amount} · {o.isDemo ? "Demo" : "Real"}
+                        {timeOf(o.time)} · ${o.amount}
                       </span>
                     </div>
                   </div>

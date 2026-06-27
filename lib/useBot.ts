@@ -227,7 +227,6 @@ export function useBot(
       }
       if (!cancelled) setScheduleBlocked(false)
 
-      const c = configRef.current
       const direction = Math.random() < 0.5 ? ("BUY" as const) : ("SELL" as const)
       const asset = randomAsset()
       const stake = computeStake()
@@ -243,7 +242,7 @@ export function useBot(
             symbol: asset.symbol,
             direction,
             amount: stake,
-            isDemo: c.isDemo,
+            isDemo: false,
             status: "pending" as OpStatus,
             pnl: null,
             balanceAfter: null,
@@ -261,7 +260,7 @@ export function useBot(
           direction,
           amount: stake,
           closeType: "01:00",
-          isDemo: c.isDemo,
+          isDemo: false,
         })
         if (cancelled) return
 

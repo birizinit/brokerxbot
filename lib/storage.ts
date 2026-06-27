@@ -39,7 +39,7 @@ const KEYS = {
 export const DEFAULT_BOT_CONFIG: BotConfig = {
   opsPerHour: 6,
   amount: 5,
-  isDemo: true,
+  isDemo: false,
   galeEnabled: false,
   galeMultiplier: 2,
   galeMaxSteps: 2,
