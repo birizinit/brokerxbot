@@ -103,7 +103,6 @@ export function GaleCard({
       />
       <SegRow
         label="Tempo entre gales"
-        hint="ilustrativo"
         value={prefs.galeDelay}
         options={[0, 10, 30, 60].map((d) => ({ v: d, label: `${d}s` }))}
         onChange={(v) => setPrefs({ ...prefs, galeDelay: Number(v) })}

@@ -170,7 +170,7 @@ export function DashboardTab({
           <div className="card-head col">
             <div>
               <h3 className="disp-title">Inteligência do mercado</h3>
-              <span className="sub">Análise IA · simulado</span>
+              <span className="sub">Análise em tempo real</span>
             </div>
             <CpuIcon size={18} className="accent" />
           </div>
@@ -209,7 +209,7 @@ export function DashboardTab({
           <div className="card-head col">
             <div>
               <h3 className="disp-title">Heatmap de ativos</h3>
-              <span className="sub">Condição instantânea · simulado</span>
+              <span className="sub">Condição instantânea</span>
             </div>
             <GridIcon size={18} className="accent" />
           </div>

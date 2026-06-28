@@ -8,7 +8,7 @@ type SetPrefs = (p: UiPrefs) => void
 
 export function IndicatorsCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: SetPrefs }) {
   return (
-    <SectionCard icon={<ChartIcon size={16} />} title="Indicadores utilizados" sub="Análise técnica" visual>
+    <SectionCard icon={<ChartIcon size={16} />} title="Indicadores utilizados" sub="Análise técnica">
       <div className="toggle-list">
         {INDICATORS.map((it) => (
           <ToggleRow
@@ -26,7 +26,7 @@ export function IndicatorsCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: 
 
 export function FiltersCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: SetPrefs }) {
   return (
-    <SectionCard icon={<CpuIcon size={16} />} title="Filtros inteligentes" sub="Critérios de entrada" visual>
+    <SectionCard icon={<CpuIcon size={16} />} title="Filtros inteligentes" sub="Critérios de entrada">
       <div className="toggle-list">
         {FILTERS.map((f) => (
           <ToggleRow

@@ -22,18 +22,16 @@ interface SectionCardProps {
   title: string
   sub?: string
   right?: ReactNode
-  visual?: boolean
   children: ReactNode
 }
 
-export function SectionCard({ icon, title, sub, right, visual, children }: SectionCardProps) {
+export function SectionCard({ icon, title, sub, right, children }: SectionCardProps) {
   return (
     <div className="card pad">
       <div className="card-head col">
         <div className="sc-titlewrap">
           <h3 className="disp-title">
             {icon} {title}
-            {visual && <span className="visual-tag">ilustrativo</span>}
           </h3>
           {sub && <span className="sub">{sub}</span>}
         </div>
