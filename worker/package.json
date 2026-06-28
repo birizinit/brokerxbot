@@ -1,0 +1,16 @@
+{
+  "name": "sniper-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker 24/7 que opera o robô server-side para cada conta ativa.",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
+  }
+}
