@@ -20,7 +20,6 @@ interface RoboTabProps {
   galeStep: number
   stats: Stats
   riskMessage: string | null
-  scheduleBlocked: boolean
 }
 
 const AMOUNTS = [1, 2, 5, 10, 20, 50, 100]
@@ -43,7 +42,6 @@ export function RoboTab({
   nextStake,
   galeStep,
   riskMessage,
-  scheduleBlocked,
 }: RoboTabProps) {
   return (
     <div className="tab-stack">
@@ -79,12 +77,6 @@ export function RoboTab({
         </div>
       )}
 
-      {active && scheduleBlocked && (
-        <div className="note risk-note">
-          <InfoIcon size={16} />
-          <span>Fora do horário de operação — o robô retoma automaticamente dentro da janela configurada.</span>
-        </div>
-      )}
 
       <section className="grid two-grid">
         <div className="card pad">

@@ -40,8 +40,93 @@ async function ensureSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS bots (
+      account_id BIGINT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+      active BOOLEAN NOT NULL DEFAULT false,
+      config JSONB NOT NULL,
+      strategy JSONB NOT NULL DEFAULT '{"galeStep":0,"sorosBank":0,"sorosWins":0}',
+      activated_at TIMESTAMPTZ,
+      next_run_at BIGINT,
+      last_balance NUMERIC,
+      stop_reason TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS operations (
+      id BIGSERIAL PRIMARY KEY,
+      account_id BIGINT REFERENCES accounts(id) ON DELETE CASCADE,
+      trade_id TEXT,
+      symbol TEXT, direction TEXT, amount NUMERIC,
+      status TEXT NOT NULL,
+      pnl NUMERIC, balance_after NUMERIC,
+      close_time BIGINT,
+      message TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `)
   schemaReady = true
+}
+
+export interface BotRow {
+  active: boolean
+  config: Record<string, unknown>
+  strategy: { galeStep: number; sorosBank: number; sorosWins: number }
+  activated_at: string | null
+  next_run_at: string | null
+  last_balance: string | null
+  stop_reason: string | null
+}
+
+export async function getBot(accountId: string): Promise<BotRow | null> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT * FROM bots WHERE account_id = $1`, [accountId])
+  return (r.rows[0] as BotRow) ?? null
+}
+
+/** Cria/atualiza a configuração do bot, preservando o estado ativo. */
+export async function upsertBotConfig(accountId: string, config: unknown): Promise<void> {
+  await ensureSchema()
+  await pool().query(
+    `INSERT INTO bots (account_id, config) VALUES ($1, $2)
+     ON CONFLICT (account_id) DO UPDATE SET config = $2, updated_at = now()`,
+    [accountId, JSON.stringify(config)],
+  )
+}
+
+/** Liga/desliga o bot. Ao ligar, zera o motivo de parada e libera a próxima operação. */
+export async function setBotActive(accountId: string, active: boolean): Promise<void> {
+  await ensureSchema()
+  if (active) {
+    await pool().query(
+      `UPDATE bots SET active = true, activated_at = now(), stop_reason = NULL, next_run_at = NULL,
+       strategy = '{"galeStep":0,"sorosBank":0,"sorosWins":0}', updated_at = now() WHERE account_id = $1`,
+      [accountId],
+    )
+  } else {
+    await pool().query(`UPDATE bots SET active = false, updated_at = now() WHERE account_id = $1`, [accountId])
+  }
+}
+
+export interface OperationRow {
+  id: string
+  trade_id: string | null
+  symbol: string | null
+  direction: string | null
+  amount: string | null
+  status: string
+  pnl: string | null
+  balance_after: string | null
+  close_time: string | null
+  message: string | null
+  created_at: string
+}
+
+export async function getOperations(accountId: string, limit = 120): Promise<OperationRow[]> {
+  await ensureSchema()
+  const r = await pool().query(
+    `SELECT * FROM operations WHERE account_id = $1 ORDER BY created_at DESC LIMIT $2`,
+    [accountId, limit],
+  )
+  return r.rows as OperationRow[]
 }
 
 export interface AccountRow {

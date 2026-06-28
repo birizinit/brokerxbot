@@ -2,15 +2,19 @@
 
 import { SectionCard, ToggleRow } from "@/components/controls"
 import { NOTIF_TYPES, WEEK_DAYS, type UiPrefs } from "@/lib/prefs"
+import type { BotConfig } from "@/lib/storage"
 import { BellIcon, GearIcon } from "@/components/icons"
 
 type SetPrefs = (p: UiPrefs) => void
+type Patch = (c: Partial<BotConfig>) => void
 
-export function ScheduleCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: SetPrefs }) {
+export function ScheduleCard({ config, patch }: { config: BotConfig; patch: Patch }) {
+  const sch = config.schedule
+  const setSch = (changes: Partial<BotConfig["schedule"]>) => patch({ schedule: { ...sch, ...changes } })
   const toggleDay = (i: number) => {
-    const days = prefs.days.slice()
+    const days = sch.days.slice()
     days[i] = !days[i]
-    setPrefs({ ...prefs, days })
+    setSch({ days })
   }
 
   return (
@@ -18,27 +22,17 @@ export function ScheduleCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: Se
       <div className="time-rows">
         <div className="time-row">
           <span className="muted sm">das</span>
-          <input
-            className="input time-input num"
-            type="time"
-            value={prefs.windowStart}
-            onChange={(e) => setPrefs({ ...prefs, windowStart: e.target.value })}
-          />
+          <input className="input time-input num" type="time" value={sch.start} onChange={(e) => setSch({ start: e.target.value })} />
           <span className="muted sm">às</span>
-          <input
-            className="input time-input num"
-            type="time"
-            value={prefs.windowEnd}
-            onChange={(e) => setPrefs({ ...prefs, windowEnd: e.target.value })}
-          />
+          <input className="input time-input num" type="time" value={sch.end} onChange={(e) => setSch({ end: e.target.value })} />
         </div>
       </div>
 
       <ToggleRow
         name="Não operar fora dos horários"
         desc="Quando ligado, o robô só opera na janela e dias marcados"
-        on={prefs.scheduleEnabled}
-        onChange={(v) => setPrefs({ ...prefs, scheduleEnabled: v })}
+        on={sch.enabled}
+        onChange={(v) => setSch({ enabled: v })}
       />
 
       <div className="days-label label" style={{ marginTop: 12 }}>
@@ -46,7 +40,7 @@ export function ScheduleCard({ prefs, setPrefs }: { prefs: UiPrefs; setPrefs: Se
       </div>
       <div className="days">
         {WEEK_DAYS.map((d, i) => (
-          <button key={d} type="button" className="day" data-on={prefs.days[i]} onClick={() => toggleDay(i)}>
+          <button key={d} type="button" className="day" data-on={sch.days[i]} onClick={() => toggleDay(i)}>
             {d}
           </button>
         ))}

@@ -1,20 +1,21 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { Profile, BotConfig } from "@/lib/storage"
-import { storage } from "@/lib/storage"
-import { getWallets, sumBalance } from "@/lib/api"
-import { useBot } from "@/lib/useBot"
+import { storage, DEFAULT_BOT_CONFIG } from "@/lib/storage"
+import { getWallets, sumBalance, getBotState, saveBotConfig, setBotActiveApi } from "@/lib/api"
 import { computeStats } from "@/lib/stats"
+import { computeStake } from "@/lib/strategy"
 import { getPrefs, setPrefs as persistPrefs, type UiPrefs } from "@/lib/prefs"
+import type { BotOp } from "@/lib/types"
 import { TermsModal } from "@/components/TermsModal"
 import { AlertModal } from "@/components/AlertModal"
+import { NotificationBell } from "@/components/NotificationBell"
 import { DashboardTab } from "@/components/tabs/DashboardTab"
 import { RoboTab } from "@/components/tabs/RoboTab"
 import { StatsTab } from "@/components/tabs/StatsTab"
 import { RiskTab } from "@/components/tabs/RiskTab"
 import { SettingsTab } from "@/components/tabs/SettingsTab"
-import { NotificationBell } from "@/components/NotificationBell"
 import { GridIcon, RobotIcon, ChartIcon, ShieldIcon, GearIcon, BoltIcon, ChevronLeftIcon } from "@/components/icons"
 
 interface CentralProps {
@@ -38,77 +39,73 @@ function money(v: number): string {
 }
 
 function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "BX"
+  const p = name.trim().split(/\s+/)
+  return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "ST"
 }
 
 export function Central({ apiKey, profile, onLogout }: CentralProps) {
-  const [config, setConfig] = useState<BotConfig>(() => ({ ...storage.getBotConfig(), isDemo: false }))
-  const [active, setActive] = useState<boolean>(() => storage.getBotActive())
-  const [activatedAt, setActivatedAt] = useState<number | null>(() => storage.getBotActivatedAt())
+  const [config, setConfig] = useState<BotConfig>(DEFAULT_BOT_CONFIG)
+  const [active, setActive] = useState(false)
+  const [strategy, setStrategy] = useState({ galeStep: 0, sorosBank: 0, sorosWins: 0 })
+  const [activatedAt, setActivatedAt] = useState<number | null>(null)
+  const [nextRunAt, setNextRunAt] = useState<number | null>(null)
+  const [stopReason, setStopReason] = useState<string | null>(null)
+  const [ops, setOps] = useState<BotOp[]>([])
   const [balance, setBalance] = useState<number | null>(null)
   const [now, setNow] = useState<number>(() => Date.now())
   const [tab, setTab] = useState<TabId>("dashboard")
   const [termsOpen, setTermsOpen] = useState(false)
-  const [riskMessage, setRiskMessage] = useState<string | null>(null)
   const [activateError, setActivateError] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.getSidebarCollapsed())
   const [prefs, setPrefsState] = useState<UiPrefs>(() => getPrefs())
+  const [loaded, setLoaded] = useState(false)
+  const dirty = useRef(false)
 
   useEffect(() => storage.setSidebarCollapsed(collapsed), [collapsed])
-
   const updatePrefs = (p: UiPrefs) => {
     setPrefsState(p)
     persistPrefs(p)
   }
 
-  const handleRiskStop = useMemo(
-    () => (reason: string) => {
-      setActive(false)
-      setRiskMessage(reason)
-      setTab("robo")
-    },
-    [],
-  )
+  // Sincroniza o estado do robô (gerido pelo worker no servidor).
+  const syncState = async (applyConfig: boolean) => {
+    const s = await getBotState()
+    if (!s) return
+    setActive(s.active)
+    setStrategy(s.strategy)
+    setActivatedAt(s.activatedAt)
+    setNextRunAt(s.nextRunAt)
+    setStopReason(s.stopReason)
+    setOps(s.ops)
+    if (applyConfig && s.config) setConfig({ ...DEFAULT_BOT_CONFIG, ...s.config })
+  }
 
-  // Recusa da corretora por saldo: para o robô imediatamente.
-  const handleReject = useCallback(
-    (info: { status: number; message: string }) => {
-      const lowBalance = balance != null && balance < config.amount
-      const fundsMsg = /insufficient|insuficiente|saldo|balance|fund/i.test(info.message)
-      if (lowBalance || fundsMsg) {
-        setActive(false)
-        setRiskMessage("Saldo insuficiente — o robô foi parado pela recusa da corretora.")
-        setActivateError("A corretora recusou a operação por saldo insuficiente. O robô foi desativado automaticamente.")
-      }
-    },
-    [balance, config.amount],
-  )
-
-  const schedule = useMemo(
-    () => ({ enabled: prefs.scheduleEnabled, start: prefs.windowStart, end: prefs.windowEnd, days: prefs.days }),
-    [prefs.scheduleEnabled, prefs.windowStart, prefs.windowEnd, prefs.days],
-  )
-
-  const runtime = useBot(apiKey, config, active, handleRiskStop, schedule, handleReject)
-  const stats = useMemo(() => computeStats(runtime.ops), [runtime.ops])
-  const tick = Math.floor(now / 15000)
-
-  useEffect(() => storage.setBotConfig(config), [config])
-  useEffect(() => storage.setBotActive(active), [active])
-
-  // Marca o início do "tempo ligado" e persiste para sobreviver a recarregamentos.
   useEffect(() => {
-    if (active && !storage.getBotActivatedAt()) {
-      const t = Date.now()
-      storage.setBotActivatedAt(t)
-      setActivatedAt(t)
-    } else if (!active) {
-      storage.setBotActivatedAt(null)
-      setActivatedAt(null)
+    let alive = true
+    ;(async () => {
+      await syncState(true)
+      if (alive) setLoaded(true)
+    })()
+    const id = setInterval(() => syncState(false), 5000)
+    return () => {
+      alive = false
+      clearInterval(id)
     }
-  }, [active])
+  }, [])
 
+  // Salva a config no banco (debounce) sempre que o usuário muda algo.
+  useEffect(() => {
+    if (!loaded || !dirty.current) return
+    const t = setTimeout(() => saveBotConfig(config), 600)
+    return () => clearTimeout(t)
+  }, [config, loaded])
+
+  const patch = (changes: Partial<BotConfig>) => {
+    dirty.current = true
+    setConfig((c) => ({ ...c, ...changes }))
+  }
+
+  // Saldo da wallet REAL (para exibição).
   useEffect(() => {
     let alive = true
     const load = async () => {
@@ -125,43 +122,23 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       alive = false
       clearInterval(id)
     }
-  }, [apiKey, runtime.ops.length])
-
-  // Saldo acabou durante a operação: para o robô e avisa.
-  useEffect(() => {
-    if (!active || balance == null) return
-    if (balance < config.amount) {
-      setActive(false)
-      setRiskMessage("Saldo real insuficiente — o robô foi parado automaticamente.")
-      setActivateError(
-        `O saldo da sua conta real (\$ ${money(balance)}) ficou abaixo do valor da entrada (\$ ${money(config.amount)}). ` +
-          `O robô foi desativado automaticamente.`,
-      )
-    }
-  }, [active, balance, config.amount])
-
-  // Meta diária: para o robô quando o lucro do dia atinge % do saldo.
-  useEffect(() => {
-    if (!active || config.dailyTargetPct <= 0 || balance == null) return
-    const target = (balance * config.dailyTargetPct) / 100
-    if (target > 0 && stats.dayPnl >= target) {
-      handleRiskStop(`Meta diária atingida (+$${stats.dayPnl.toFixed(2)})`)
-    }
-  }, [active, config.dailyTargetPct, balance, stats.dayPnl, handleRiskStop])
+  }, [apiKey])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  const patch = (changes: Partial<BotConfig>) => setConfig((c) => ({ ...c, ...changes }))
+  const stats = useMemo(() => computeStats(ops), [ops])
+  const nextStake = useMemo(() => computeStake(config, strategy), [config, strategy])
+  const tick = Math.floor(now / 15000)
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     if (active) {
       setActive(false)
+      await setBotActiveApi(false)
       return
     }
-    // Bloqueia a ativação se o saldo real for menor que o valor da entrada.
     if (balance != null && balance < config.amount) {
       setActivateError(
         `Sua entrada por operação é $ ${money(config.amount)}, mas o saldo da sua conta real é $ ${money(balance)}. ` +
@@ -172,11 +149,14 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     setTermsOpen(true)
   }
 
-  const acceptTerms = () => {
+  const acceptTerms = async () => {
     storage.setTermsAccepted(true)
     setTermsOpen(false)
-    setRiskMessage(null)
+    await saveBotConfig(config)
+    await setBotActiveApi(true)
     setActive(true)
+    setStopReason(null)
+    syncState(false)
   }
 
   const current = TABS.find((t) => t.id === tab) ?? TABS[0]
@@ -233,7 +213,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               <span className="tag-acct real">REAL</span>
               <span className="num">{balance === null ? "—" : `$ ${money(balance)}`}</span>
             </span>
-            <NotificationBell ops={runtime.ops} riskMessage={riskMessage} notif={prefs.notif} />
+            <NotificationBell ops={ops} riskMessage={stopReason} notif={prefs.notif} />
             <span className="avatar">{initials(profile.name)}</span>
           </div>
         </header>
@@ -272,26 +252,20 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               onToggle={handleToggle}
               activatedAt={activatedAt}
               now={now}
-              nextStake={runtime.nextStake}
-              galeStep={runtime.galeStep}
+              nextStake={nextStake}
+              galeStep={strategy.galeStep}
               stats={stats}
-              riskMessage={riskMessage}
-              scheduleBlocked={runtime.scheduleBlocked}
+              riskMessage={stopReason}
             />
           )}
-          {tab === "stats" && <StatsTab ops={runtime.ops} stats={stats} />}
+          {tab === "stats" && <StatsTab ops={ops} stats={stats} />}
           {tab === "manage" && (
-            <RiskTab
-              config={config}
-              patch={patch}
-              prefs={prefs}
-              setPrefs={updatePrefs}
-              galeStep={runtime.galeStep}
-              balance={balance}
-            />
+            <RiskTab config={config} patch={patch} prefs={prefs} setPrefs={updatePrefs} galeStep={strategy.galeStep} balance={balance} />
           )}
           {tab === "settings" && (
             <SettingsTab
+              config={config}
+              patch={patch}
               prefs={prefs}
               setPrefs={updatePrefs}
               profile={profile}

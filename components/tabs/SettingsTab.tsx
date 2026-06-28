@@ -3,11 +3,13 @@
 import { SectionCard } from "@/components/controls"
 import { IndicatorsCard, FiltersCard } from "@/components/sections/TechnicalSections"
 import { ScheduleCard, NotifPrefsCard } from "@/components/sections/SystemSections"
-import type { Profile } from "@/lib/storage"
+import type { Profile, BotConfig } from "@/lib/storage"
 import type { UiPrefs } from "@/lib/prefs"
 import { UserIcon, LogoutIcon, ShieldIcon } from "@/components/icons"
 
 interface SettingsTabProps {
+  config: BotConfig
+  patch: (c: Partial<BotConfig>) => void
   prefs: UiPrefs
   setPrefs: (p: UiPrefs) => void
   profile: Profile
@@ -15,7 +17,7 @@ interface SettingsTabProps {
   onOpenTerms: () => void
 }
 
-export function SettingsTab({ prefs, setPrefs, profile, onLogout, onOpenTerms }: SettingsTabProps) {
+export function SettingsTab({ config, patch, prefs, setPrefs, profile, onLogout, onOpenTerms }: SettingsTabProps) {
   return (
     <div className="tab-stack">
       <section className="grid two-grid">
@@ -23,7 +25,7 @@ export function SettingsTab({ prefs, setPrefs, profile, onLogout, onOpenTerms }:
         <FiltersCard prefs={prefs} setPrefs={setPrefs} />
       </section>
 
-      <ScheduleCard prefs={prefs} setPrefs={setPrefs} />
+      <ScheduleCard config={config} patch={patch} />
 
       <NotifPrefsCard prefs={prefs} setPrefs={setPrefs} />
 

@@ -1,7 +1,8 @@
 // Cliente de API usado pelo browser. Fala apenas com as nossas rotas
 // internas (/api/*), que por sua vez encaminham para a corretora.
 
-import type { TradeResult } from "@/lib/types"
+import type { TradeResult, BotOp, OpStatus } from "@/lib/types"
+import type { BotConfig } from "@/lib/storage"
 
 export interface Wallet {
   id: string
@@ -25,6 +26,86 @@ export type KeyCheck =
 
 function authHeaders(apiKey: string): HeadersInit {
   return { "api-token": apiKey }
+}
+
+// ---------- Controle do robô (server-side via worker) ----------
+
+export interface BotState {
+  active: boolean
+  config: BotConfig | null
+  strategy: { galeStep: number; sorosBank: number; sorosWins: number }
+  activatedAt: number | null
+  nextRunAt: number | null
+  lastBalance: number | null
+  stopReason: string | null
+  ops: BotOp[]
+}
+
+function mapOp(r: Record<string, unknown>): BotOp {
+  const num = (v: unknown) => (v == null ? null : Number(v))
+  return {
+    id: String(r.id),
+    tradeId: (r.trade_id as string) ?? null,
+    time: r.created_at ? Date.parse(r.created_at as string) : Date.now(),
+    closeTime: r.close_time != null ? Number(r.close_time) : null,
+    symbol: (r.symbol as string) ?? "",
+    direction: r.direction === "SELL" ? "SELL" : "BUY",
+    amount: Number(r.amount ?? 0),
+    isDemo: false,
+    status: (r.status as OpStatus) ?? "pending",
+    pnl: num(r.pnl),
+    balanceAfter: num(r.balance_after),
+    openPrice: null,
+    closePrice: null,
+    message: (r.message as string) ?? "",
+  }
+}
+
+/** Lê o estado atual do robô (do banco, atualizado pelo worker). */
+export async function getBotState(): Promise<BotState | null> {
+  try {
+    const res = await fetch("/api/bot", { cache: "no-store" })
+    if (!res.ok) return null
+    const d = await res.json()
+    const bot = d.bot
+    const ops = Array.isArray(d.operations) ? d.operations.map(mapOp) : []
+    return {
+      active: bot?.active ?? false,
+      config: (bot?.config as BotConfig) ?? null,
+      strategy: bot?.strategy ?? { galeStep: 0, sorosBank: 0, sorosWins: 0 },
+      activatedAt: bot?.activated_at ? Date.parse(bot.activated_at) : null,
+      nextRunAt: bot?.next_run_at != null ? Number(bot.next_run_at) : null,
+      lastBalance: bot?.last_balance != null ? Number(bot.last_balance) : null,
+      stopReason: bot?.stop_reason ?? null,
+      ops,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function saveBotConfig(config: BotConfig): Promise<void> {
+  try {
+    await fetch("/api/bot/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    })
+  } catch {
+    /* ignora */
+  }
+}
+
+export async function setBotActiveApi(active: boolean): Promise<void> {
+  try {
+    await fetch("/api/bot/active", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active }),
+    })
+  } catch {
+    /* ignora */
+  }
 }
 
 export interface SessionAccount {

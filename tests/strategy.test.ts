@@ -15,6 +15,7 @@ const base: BotConfig = {
   stopWin: 0,
   stopLoss: 0,
   dailyTargetPct: 0,
+  schedule: { enabled: false, start: "09:00", end: "18:00", days: [true, true, true, true, true, false, false] },
 }
 const cfg = (o: Partial<BotConfig>): BotConfig => ({ ...base, ...o })
 
