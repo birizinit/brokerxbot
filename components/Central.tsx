@@ -7,10 +7,12 @@ import { getWallets, sumBalance, getBotState, saveBotConfig, setBotActiveApi } f
 import { computeStats } from "@/lib/stats"
 import { computeStake } from "@/lib/strategy"
 import { getPrefs, setPrefs as persistPrefs, type UiPrefs } from "@/lib/prefs"
+import { toast } from "@/lib/toast"
 import type { BotOp } from "@/lib/types"
 import { TermsModal } from "@/components/TermsModal"
 import { AlertModal } from "@/components/AlertModal"
 import { NotificationBell } from "@/components/NotificationBell"
+import { CentralSkeleton } from "@/components/Skeleton"
 import { DashboardTab } from "@/components/tabs/DashboardTab"
 import { RoboTab } from "@/components/tabs/RoboTab"
 import { StatsTab } from "@/components/tabs/StatsTab"
@@ -60,6 +62,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const [prefs, setPrefsState] = useState<UiPrefs>(() => getPrefs())
   const [loaded, setLoaded] = useState(false)
   const dirty = useRef(false)
+  const prevState = useRef<{ active: boolean; stop: string | null }>({ active: false, stop: null })
 
   useEffect(() => storage.setSidebarCollapsed(collapsed), [collapsed])
   const updatePrefs = (p: UiPrefs) => {
@@ -71,6 +74,11 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const syncState = async (applyConfig: boolean) => {
     const s = await getBotState()
     if (!s) return
+    // Avisa quando o worker parou o robô (estava ativo, parou com motivo novo).
+    if (!applyConfig && prevState.current.active && !s.active && s.stopReason && s.stopReason !== prevState.current.stop) {
+      toast(s.stopReason, "error")
+    }
+    prevState.current = { active: s.active, stop: s.stopReason }
     setActive(s.active)
     setStrategy(s.strategy)
     setActivatedAt(s.activatedAt)
@@ -96,7 +104,10 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   // Salva a config no banco (debounce) sempre que o usuário muda algo.
   useEffect(() => {
     if (!loaded || !dirty.current) return
-    const t = setTimeout(() => saveBotConfig(config), 600)
+    const t = setTimeout(() => {
+      saveBotConfig(config)
+      toast("Configuração salva")
+    }, 700)
     return () => clearTimeout(t)
   }, [config, loaded])
 
@@ -136,7 +147,9 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
   const handleToggle = async () => {
     if (active) {
       setActive(false)
+      prevState.current = { active: false, stop: null }
       await setBotActiveApi(false)
+      toast("Robô desativado", "info")
       return
     }
     if (balance != null && balance < config.amount) {
@@ -156,6 +169,8 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     await setBotActiveApi(true)
     setActive(true)
     setStopReason(null)
+    prevState.current = { active: true, stop: null }
+    toast("Robô ativado", "success")
     syncState(false)
   }
 
@@ -229,6 +244,10 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
             </span>
           </div>
 
+          {!loaded ? (
+            <CentralSkeleton />
+          ) : (
+          <>
           {tab === "dashboard" && (
             <DashboardTab
               balance={balance}
@@ -272,6 +291,8 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
               onLogout={onLogout}
               onOpenTerms={() => setTermsOpen(true)}
             />
+          )}
+          </>
           )}
         </main>
       </div>

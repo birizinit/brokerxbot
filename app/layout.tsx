@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
+import { Toaster } from "@/components/Toaster"
 import "./globals.css"
 
 const sans = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={`${sans.variable} ${display.variable} ${mono.variable}`}>
       <body>
         <div className="app-shell">{children}</div>
+        <Toaster />
       </body>
     </html>
   )

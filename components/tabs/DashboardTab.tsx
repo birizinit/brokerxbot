@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { MetricCard } from "@/components/MetricCard"
+import { AnimatedNumber } from "@/components/AnimatedNumber"
 import { SequenceDots } from "@/components/SequenceDots"
 import { marketSignal, heatmap } from "@/lib/market"
 import type { BotConfig } from "@/lib/storage"
@@ -68,7 +69,7 @@ export function DashboardTab({
         <MetricCard
           icon={<WalletIcon size={17} />}
           label="Saldo corretora"
-          value={balance === null ? "—" : `$ ${money(balance)}`}
+          value={balance === null ? "—" : <AnimatedNumber value={balance} format={(v) => `$ ${money(v)}`} />}
           sub={<span className="faint">Atualizado agora</span>}
         />
         <MetricCard
@@ -80,20 +81,20 @@ export function DashboardTab({
         <MetricCard
           icon={<ActivityIcon size={17} />}
           label="Ops enviadas"
-          value={String(stats.sent)}
+          value={<AnimatedNumber value={stats.sent} format={(v) => String(Math.round(v))} />}
           sub={<span className="faint">Hoje</span>}
         />
         <MetricCard
           icon={<DollarIcon size={17} />}
           label="Lucro do dia"
-          value={`${stats.dayPnl >= 0 ? "+" : ""}$ ${money(stats.dayPnl)}`}
+          value={<AnimatedNumber value={stats.dayPnl} format={(v) => `${v >= 0 ? "+" : ""}$ ${money(v)}`} />}
           tone={stats.dayPnl > 0 ? "up" : stats.dayPnl < 0 ? "down" : "default"}
           sub={<span className={stats.roi >= 0 ? "up" : "down"}>{stats.roi >= 0 ? "+" : ""}{stats.roi}% ROI</span>}
         />
         <MetricCard
           icon={<TrophyIcon size={17} />}
           label="Assertividade"
-          value={`${stats.winRate}%`}
+          value={<AnimatedNumber value={stats.winRate} format={(v) => `${v.toFixed(1)}%`} />}
           tone={stats.winRate >= 50 ? "up" : stats.winRate > 0 ? "down" : "default"}
           sub={
             <span className="faint">

@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 interface MetricCardProps {
   icon: ReactNode
   label: string
-  value: string
+  value: ReactNode
   sub?: ReactNode
   tone?: "default" | "up" | "down"
 }
