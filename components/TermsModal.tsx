@@ -45,7 +45,7 @@ export function TermsModal({ open, isDemo, onAccept, onClose }: TermsModalProps)
           Termo de aceite
         </h2>
         <p className="modal-sub">
-          Antes de ativar o robô, leia e aceite as condições de uso da automação de operações.
+          Antes de ativar a IA, leia e aceite as condições de uso da automação de operações.
         </p>
 
         {!isDemo && (
@@ -60,7 +60,7 @@ export function TermsModal({ open, isDemo, onAccept, onClose }: TermsModalProps)
 
         <ul className="terms-list">
           <li>
-            O robô realiza operações de forma <b>automática</b> em ativos escolhidos conforme o
+            A IA realiza operações de forma <b>automática</b> em ativos escolhidos conforme o
             movimento do mercado, no ritmo que você configurou.
           </li>
           <li>
@@ -68,8 +68,8 @@ export function TermsModal({ open, isDemo, onAccept, onClose }: TermsModalProps)
             resultados futuros.
           </li>
           <li>
-            O robô <b>permanece ligado</b> até que você o desative manualmente. Ele não se desliga
-            sozinho.
+            A IA <b>permanece ligada</b> até que você a desative manualmente. Ela não se desliga
+            sozinha.
           </li>
           <li>
             Você é o <b>único responsável</b> pelas configurações, pelo capital aplicado e pelos

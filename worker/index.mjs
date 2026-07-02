@@ -1,6 +1,6 @@
 // ============================================================
 //  SNIPER TRADER — Worker 24/7
-//  Opera o robô no servidor para cada conta ativa, independente
+//  Opera a IA no servidor para cada conta ativa, independente
 //  do navegador do usuário. Lê config/estado do Postgres,
 //  decripta a chave API, abre e liquida operações na corretora.
 // ============================================================
@@ -168,7 +168,7 @@ async function deactivate(accountId, reason) {
     `UPDATE bots SET active = false, stop_reason = $2, next_run_at = NULL, updated_at = now() WHERE account_id = $1`,
     [accountId, reason],
   )
-  log(`conta ${accountId}: robô parado — ${reason}`)
+  log(`conta ${accountId}: IA parada — ${reason}`)
 }
 
 // ---------- liquidação ----------

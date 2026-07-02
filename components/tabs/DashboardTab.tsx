@@ -230,7 +230,7 @@ export function DashboardTab({
           <div className="card-head col">
             <div>
               <h3 className="disp-title">Operações por hora</h3>
-              <span className="sub">Ritmo do robô</span>
+              <span className="sub">Ritmo da IA</span>
             </div>
           </div>
           <div className="ops-head">

@@ -1,4 +1,4 @@
-// Janela de operação. Decide se o robô pode operar agora conforme
+// Janela de operação. Decide se a IA pode operar agora conforme
 // dias da semana e o intervalo de horário configurados.
 
 export interface Schedule {
@@ -13,7 +13,7 @@ function toMinutes(hhmm: string): number {
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0)
 }
 
-/** Verdadeiro se o robô está autorizado a operar no instante atual. */
+/** Verdadeiro se a IA está autorizada a operar no instante atual. */
 export function isWithinSchedule(s: Schedule, at: Date = new Date()): boolean {
   if (!s.enabled) return true
 

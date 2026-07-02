@@ -13,7 +13,7 @@ export function LineChart({ points, height = 200 }: LineChartProps) {
   if (points.length < 2) {
     return (
       <div className="chart-empty" style={{ height }}>
-        Sem dados suficientes — ative o robô para gerar histórico.
+        Sem dados suficientes — ative a IA para gerar histórico.
       </div>
     )
   }

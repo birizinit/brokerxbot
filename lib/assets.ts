@@ -1,4 +1,4 @@
-// Ativos operados pelo robô. O usuário não seleciona o ativo — o robô escolhe
+// Ativos operados pela IA. O usuário não seleciona o ativo — a IA escolhe
 // conforme o movimento do mercado a cada operação.
 
 export interface Asset {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import {
   MailIcon,
   KeyIcon,
@@ -8,69 +8,64 @@ import {
   EyeOffIcon,
   LogoutIcon,
   SpinnerIcon,
-  UserIcon,
   CloseIcon,
-  PhoneIcon,
-  TrashIcon,
-  DownloadIcon,
-  SearchIcon,
+  GridIcon,
+  UserIcon,
+  ShieldIcon,
 } from "@/components/icons"
-
-interface ClientRow {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  created_at: string
-}
+import type { AdminStats, ClientRow } from "@/components/admin/types"
+import { OverviewTab } from "@/components/admin/OverviewTab"
+import { ClientsTab } from "@/components/admin/ClientsTab"
+import { AdminsTab } from "@/components/admin/AdminsTab"
 
 type Auth = "loading" | "out" | "in"
+type Tab = "overview" | "clients" | "admins"
 
-function fmtDate(s: string): string {
-  return new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-}
-
-function withinDays(s: string, days: number): boolean {
-  return Date.now() - new Date(s).getTime() <= days * 86_400_000
-}
-
-function isToday(s: string): boolean {
-  const d = new Date(s)
-  const n = new Date()
-  return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
-}
-
-function waLink(phone: string | null): string | null {
-  if (!phone) return null
-  let d = phone.replace(/\D/g, "")
-  if (!d) return null
-  if (d.length <= 11) d = "55" + d
-  return `https://wa.me/${d}`
-}
+const TABS: { id: Tab; label: string; Icon: typeof GridIcon }[] = [
+  { id: "overview", label: "Visão geral", Icon: GridIcon },
+  { id: "clients", label: "Clientes", Icon: UserIcon },
+  { id: "admins", label: "Administradores", Icon: ShieldIcon },
+]
 
 export default function AdminPage() {
   const [auth, setAuth] = useState<Auth>("loading")
+  const [tab, setTab] = useState<Tab>("overview")
   const [clients, setClients] = useState<ClientRow[]>([])
-  const [query, setQuery] = useState("")
+  const [stats, setStats] = useState<AdminStats | null>(null)
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [show, setShow] = useState(false)
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
 
-  const load = async () => {
+  const loadClients = async () => {
     const res = await fetch("/api/admin/clients", { cache: "no-store" })
     if (res.ok) {
       const data = await res.json()
       setClients(Array.isArray(data.clients) ? data.clients : [])
       setAuth("in")
-    } else {
-      setAuth("out")
+      return true
+    }
+    setAuth("out")
+    return false
+  }
+
+  const loadStats = async () => {
+    const res = await fetch("/api/admin/stats", { cache: "no-store" })
+    if (res.ok) {
+      const data = await res.json()
+      setStats(data.stats ?? null)
     }
   }
 
+  const loadAll = async () => {
+    const ok = await loadClients()
+    if (ok) loadStats()
+  }
+
   useEffect(() => {
-    load()
+    loadAll()
   }, [])
 
   const handleLogin = async (e: FormEvent) => {
@@ -85,7 +80,7 @@ export default function AdminPage() {
       })
       if (res.ok) {
         setPassword("")
-        await load()
+        await loadAll()
       } else {
         setError("E-mail ou senha incorretos.")
       }
@@ -100,45 +95,8 @@ export default function AdminPage() {
     await fetch("/api/admin/logout", { method: "POST" })
     setAuth("out")
     setClients([])
+    setStats(null)
   }
-
-  const removeClient = async (c: ClientRow) => {
-    if (!window.confirm(`Excluir o cliente "${c.name}"? Esta ação não pode ser desfeita.`)) return
-    const res = await fetch(`/api/admin/clients?id=${encodeURIComponent(c.id)}`, { method: "DELETE" })
-    if (res.ok) setClients((prev) => prev.filter((x) => x.id !== c.id))
-  }
-
-  const exportCsv = () => {
-    const header = "nome,email,telefone,cadastro"
-    const lines = clients.map(
-      (c) => `"${c.name.replace(/"/g, '""')}","${c.email}","${c.phone ?? ""}","${fmtDate(c.created_at)}"`,
-    )
-    const csv = "﻿" + [header, ...lines].join("\n")
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }))
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "clientes-sniperbot.csv"
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return clients
-    return clients.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.phone ?? "").includes(q),
-    )
-  }, [clients, query])
-
-  const counts = useMemo(
-    () => ({
-      total: clients.length,
-      today: clients.filter((c) => isToday(c.created_at)).length,
-      d7: clients.filter((c) => withinDays(c.created_at, 7)).length,
-      d30: clients.filter((c) => withinDays(c.created_at, 30)).length,
-    }),
-    [clients],
-  )
 
   return (
     <div className="app" style={{ display: "block" }}>
@@ -223,20 +181,17 @@ export default function AdminPage() {
       )}
 
       {auth === "in" && (
-        <div className="content" style={{ maxWidth: 1080, margin: "0 auto" }}>
+        <div className="content" style={{ maxWidth: 1120, margin: "0 auto" }}>
           <div className="page-head">
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <img src="/logo-full.png" alt="Sniper Trader" style={{ height: 46, width: "auto", objectFit: "contain" }} />
               <div>
-                <h1 className="disp page-title">Clientes</h1>
-                <p className="page-sub">Sniper Trader — painel administrativo</p>
+                <h1 className="disp page-title">Painel administrativo</h1>
+                <p className="page-sub">Sniper Trader — gestão de usuários e IA</p>
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn btn-ghost" onClick={exportCsv} disabled={clients.length === 0}>
-                <DownloadIcon size={16} /> CSV
-              </button>
-              <button className="btn btn-ghost" onClick={load}>
+              <button className="btn btn-ghost" onClick={loadAll}>
                 Atualizar
               </button>
               <button className="btn btn-danger" onClick={logout}>
@@ -245,101 +200,17 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <section className="grid metrics-grid" style={{ marginBottom: 16 }}>
-            <div className="card metric">
-              <div className="metric-top">
-                <span className="metric-label">Total</span>
-                <span className="metric-ic">
-                  <UserIcon size={16} />
-                </span>
-              </div>
-              <div className="metric-value num">{counts.total}</div>
-            </div>
-            <div className="card metric">
-              <div className="metric-top">
-                <span className="metric-label">Hoje</span>
-              </div>
-              <div className="metric-value num accent">{counts.today}</div>
-            </div>
-            <div className="card metric">
-              <div className="metric-top">
-                <span className="metric-label">Últimos 7 dias</span>
-              </div>
-              <div className="metric-value num">{counts.d7}</div>
-            </div>
-            <div className="card metric">
-              <div className="metric-top">
-                <span className="metric-label">Últimos 30 dias</span>
-              </div>
-              <div className="metric-value num">{counts.d30}</div>
-            </div>
-          </section>
+          <nav className="a-tabs">
+            {TABS.map(({ id, label, Icon }) => (
+              <button key={id} className="a-tab" data-on={tab === id} onClick={() => setTab(id)}>
+                <Icon size={16} /> <span>{label}</span>
+              </button>
+            ))}
+          </nav>
 
-          <div className="card pad">
-            <div className="input-wrap" style={{ marginBottom: 16 }}>
-              <span className="lead">
-                <SearchIcon size={17} />
-              </span>
-              <input
-                className="input has-lead"
-                placeholder="Buscar por nome, e-mail ou telefone..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-
-            {filtered.length === 0 ? (
-              <div className="table-empty">
-                {clients.length === 0 ? "Nenhum cliente cadastrado ainda." : "Nenhum resultado para a busca."}
-              </div>
-            ) : (
-              <div className="table-wrap">
-                <table className="ttable">
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>E-mail</th>
-                      <th>Telefone</th>
-                      <th>Cadastrado em</th>
-                      <th className="ta-r">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((c) => {
-                      const wa = waLink(c.phone)
-                      return (
-                        <tr key={c.id}>
-                          <td>
-                            <span className="cell-asset">
-                              <UserIcon size={15} /> {c.name}
-                            </span>
-                          </td>
-                          <td className="faint">{c.email}</td>
-                          <td className="num">{c.phone || "—"}</td>
-                          <td className="num faint">{fmtDate(c.created_at)}</td>
-                          <td>
-                            <div className="row-actions">
-                              {wa && (
-                                <a className="act-btn wa" href={wa} target="_blank" rel="noreferrer" title="WhatsApp">
-                                  <PhoneIcon size={15} />
-                                </a>
-                              )}
-                              <a className="act-btn" href={`mailto:${c.email}`} title="Enviar e-mail">
-                                <MailIcon size={15} />
-                              </a>
-                              <button className="act-btn del" onClick={() => removeClient(c)} title="Excluir">
-                                <TrashIcon size={15} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {tab === "overview" && <OverviewTab clients={clients} stats={stats} />}
+          {tab === "clients" && <ClientsTab clients={clients} onReload={loadAll} />}
+          {tab === "admins" && <AdminsTab />}
         </div>
       )}
 

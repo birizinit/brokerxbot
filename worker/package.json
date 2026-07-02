@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Worker 24/7 que opera o robô server-side para cada conta ativa.",
+  "description": "Worker 24/7 que opera a IA server-side para cada conta ativa.",
   "scripts": {
     "start": "node index.mjs"
   },

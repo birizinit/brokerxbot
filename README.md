@@ -2,17 +2,17 @@
 
 Aplicação web para automação de operações na corretora (API MyBroker). O usuário
 entra apenas com a **chave API**, preenche um onboarding e acessa a central, onde
-ativa/desativa um robô que opera sozinho no ritmo configurado.
+ativa/desativa uma IA que opera sozinha no ritmo configurado.
 
 ## Funcionalidades
 
 - **Login por chave API** (mesma chave usada como credencial) com validação real e
   seção "Como obter minha chave API".
 - **Onboarding** com nome, e-mail e telefone.
-- **Central do robô**:
+- **Central da IA**:
   - define **operações por hora** e valor por operação;
   - **ativos sorteados automaticamente** (o usuário não escolhe);
-  - liga/desliga o robô — ele **não se desliga sozinho**;
+  - liga/desliga a IA — ela **não se desliga sozinha**;
   - **termo de aceite** antes de ativar (com aviso reforçado para conta Real);
   - histórico de operações com o **logo da cripto** em cada linha.
 - Estética: preto + verde-limão fluorescente, sem emojis (apenas SVGs).

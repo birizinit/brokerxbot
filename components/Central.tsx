@@ -29,8 +29,8 @@ interface CentralProps {
 type TabId = "dashboard" | "robo" | "stats" | "manage" | "settings"
 
 const TABS: { id: TabId; label: string; Icon: typeof GridIcon; title: string; sub: string }[] = [
-  { id: "dashboard", label: "Dashboard", Icon: GridIcon, title: "Dashboard", sub: "Visão geral em tempo real do seu robô de operações" },
-  { id: "robo", label: "Robô", Icon: RobotIcon, title: "Robô", sub: "Controle e situação do robô de operações" },
+  { id: "dashboard", label: "Dashboard", Icon: GridIcon, title: "Dashboard", sub: "Visão geral em tempo real da sua IA de operações" },
+  { id: "robo", label: "IA", Icon: RobotIcon, title: "IA", sub: "Controle e situação da IA de operações" },
   { id: "stats", label: "Estatísticas", Icon: ChartIcon, title: "Estatísticas", sub: "Desempenho, evolução e histórico de operações" },
   { id: "manage", label: "Gerenciamento", Icon: ShieldIcon, title: "Gerenciamento", sub: "Gestão de risco, Sistema de Gale e Soros" },
   { id: "settings", label: "Configurações", Icon: GearIcon, title: "Configurações", sub: "Preferências da conta e da operação" },
@@ -70,11 +70,11 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     persistPrefs(p)
   }
 
-  // Sincroniza o estado do robô (gerido pelo worker no servidor).
+  // Sincroniza o estado da IA (gerido pelo worker no servidor).
   const syncState = async (applyConfig: boolean) => {
     const s = await getBotState()
     if (!s) return
-    // Avisa quando o worker parou o robô (estava ativo, parou com motivo novo).
+    // Avisa quando o worker parou a IA (estava ativa, parou com motivo novo).
     if (!applyConfig && prevState.current.active && !s.active && s.stopReason && s.stopReason !== prevState.current.stop) {
       toast(s.stopReason, "error")
     }
@@ -149,13 +149,13 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
       setActive(false)
       prevState.current = { active: false, stop: null }
       await setBotActiveApi(false)
-      toast("Robô desativado", "info")
+      toast("IA desativada", "info")
       return
     }
     if (balance != null && balance < config.amount) {
       setActivateError(
         `Sua entrada por operação é $ ${money(config.amount)}, mas o saldo da sua conta real é $ ${money(balance)}. ` +
-          `Deposite saldo na corretora para ativar o robô.`,
+          `Deposite saldo na corretora para ativar a IA.`,
       )
       return
     }
@@ -170,7 +170,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
     setActive(true)
     setStopReason(null)
     prevState.current = { active: true, stop: null }
-    toast("Robô ativado", "success")
+    toast("IA ativada", "success")
     syncState(false)
   }
 
@@ -200,7 +200,7 @@ export function Central({ apiKey, profile, onLogout }: CentralProps) {
         <div className="side-foot">
           <span className="online">
             <span className="dot" data-on={active} />
-            {!collapsed && (active ? "Robô online" : "Robô pausado")}
+            {!collapsed && (active ? "IA online" : "IA pausada")}
           </span>
           <button
             className="collapse-btn"

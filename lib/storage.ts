@@ -20,7 +20,7 @@ export interface BotConfig {
   sorosEnabled: boolean
   sorosLevels: number
   sorosReinvest: number // fração do lucro reinvestida (1 / 0.75 / 0.5)
-  // Gerenciamento de risco (0 = desligado). Quando atingido, o robô para.
+  // Gerenciamento de risco (0 = desligado). Quando atingido, a IA para.
   stopWin: number
   stopLoss: number
   dailyTargetPct: number // meta diária em % do saldo (0 = desligado)

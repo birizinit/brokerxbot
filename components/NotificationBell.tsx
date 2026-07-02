@@ -58,7 +58,7 @@ export function NotificationBell({ ops, riskMessage, notif }: NotificationBellPr
                 <span className="bell-ic warn">!</span>
                 <div className="bell-body">
                   <span className="bell-t">{riskMessage}</span>
-                  <span className="bell-s">Robô parado pelo limite de risco</span>
+                  <span className="bell-s">IA parada pelo limite de risco</span>
                 </div>
               </div>
             )}

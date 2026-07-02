@@ -1,5 +1,5 @@
 // Criptografia e senhas — SOMENTE no servidor.
-// - Chave API: AES-256-GCM (reversível, pois o robô precisa usá-la).
+// - Chave API: AES-256-GCM (reversível, pois a IA precisa usá-la).
 // - Senha: scrypt (hash não reversível).
 // - Sessão: token = AES da identidade da conta, em cookie httpOnly.
 
@@ -49,6 +49,22 @@ export function readSession(token: string | undefined): string | null {
   try {
     const v = decrypt(token)
     return v.startsWith("acc:") ? v.slice(4) : null
+  } catch {
+    return null
+  }
+}
+
+/** Sessão de administrador. `id` é o id do admin no banco, ou "env" para o admin bootstrap. */
+export function makeAdminSession(id: string): string {
+  return encrypt(`adm:${id}`)
+}
+
+/** Lê o token de sessão admin e devolve o id (ou "env"). Null se inválido. */
+export function readAdminSession(token: string | undefined): string | null {
+  if (!token) return null
+  try {
+    const v = decrypt(token)
+    return v.startsWith("adm:") ? v.slice(4) : null
   } catch {
     return null
   }

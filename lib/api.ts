@@ -28,7 +28,7 @@ function authHeaders(apiKey: string): HeadersInit {
   return { "api-token": apiKey }
 }
 
-// ---------- Controle do robô (server-side via worker) ----------
+// ---------- Controle da IA (server-side via worker) ----------
 
 export interface BotState {
   active: boolean
@@ -61,7 +61,7 @@ function mapOp(r: Record<string, unknown>): BotOp {
   }
 }
 
-/** Lê o estado atual do robô (do banco, atualizado pelo worker). */
+/** Lê o estado atual da IA (do banco, atualizado pelo worker). */
 export async function getBotState(): Promise<BotState | null> {
   try {
     const res = await fetch("/api/bot", { cache: "no-store" })

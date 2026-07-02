@@ -66,7 +66,7 @@ export function RoboTab({
           <span className="ring">
             <PowerIcon size={18} />
           </span>
-          {active ? "Desativar robô" : "Ativar robô"}
+          {active ? "Desativar IA" : "Ativar IA"}
         </button>
       </div>
 
@@ -85,7 +85,7 @@ export function RoboTab({
               <h3 className="disp-title">
                 <BoltIcon size={16} /> Operações por hora
               </h3>
-              <span className="sub">Ritmo do robô</span>
+              <span className="sub">Ritmo da IA</span>
             </div>
           </div>
           <div className="ops-head">

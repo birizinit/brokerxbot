@@ -62,6 +62,13 @@ async function ensureSchema(): Promise<void> {
       message TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS admins (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT '',
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `)
   schemaReady = true
 }
@@ -231,4 +238,137 @@ export async function listClients(): Promise<ClientRow[]> {
 export async function deleteClient(id: string): Promise<void> {
   await ensureSchema()
   await pool().query(`DELETE FROM clients WHERE id = $1`, [id])
+}
+
+/** Redefine a senha (hash) de uma conta de usuário. */
+export async function setAccountPassword(id: string, passwordHash: string): Promise<void> {
+  await ensureSchema()
+  await pool().query(`UPDATE accounts SET password_hash = $2, updated_at = now() WHERE id = $1`, [id, passwordHash])
+}
+
+// ---------- Administradores ----------
+
+export interface AdminRow {
+  id: string
+  name: string
+  email: string
+  password_hash: string
+  created_at: string
+}
+
+export interface AdminPublic {
+  id: string
+  name: string
+  email: string
+  created_at: string
+}
+
+export interface NewAdmin {
+  name: string
+  email: string
+  passwordHash: string
+}
+
+/** Cria um administrador. Lança 'EMAIL_TAKEN' se o e-mail já existir. */
+export async function createAdmin(a: NewAdmin): Promise<string> {
+  await ensureSchema()
+  try {
+    const r = await pool().query(
+      `INSERT INTO admins (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+      [a.name, a.email, a.passwordHash],
+    )
+    return r.rows[0].id as string
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e && (e as { code: string }).code === "23505") {
+      throw new Error("EMAIL_TAKEN")
+    }
+    throw e
+  }
+}
+
+export async function getAdminByEmail(email: string): Promise<AdminRow | null> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT * FROM admins WHERE email = $1`, [email])
+  return (r.rows[0] as AdminRow) ?? null
+}
+
+export async function getAdminById(id: string): Promise<AdminRow | null> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT * FROM admins WHERE id = $1`, [id])
+  return (r.rows[0] as AdminRow) ?? null
+}
+
+/** Lista administradores (sem hash de senha). */
+export async function listAdmins(): Promise<AdminPublic[]> {
+  await ensureSchema()
+  const r = await pool().query(`SELECT id, name, email, created_at FROM admins ORDER BY created_at ASC`)
+  return r.rows as AdminPublic[]
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  await ensureSchema()
+  await pool().query(`DELETE FROM admins WHERE id = $1`, [id])
+}
+
+/** Redefine a senha (hash) de um administrador. */
+export async function setAdminPassword(id: string, passwordHash: string): Promise<void> {
+  await ensureSchema()
+  await pool().query(`UPDATE admins SET password_hash = $2 WHERE id = $1`, [id, passwordHash])
+}
+
+// ---------- Métricas para o painel admin ----------
+
+export interface DailyPoint {
+  date: string // YYYY-MM-DD
+  count: number
+}
+
+export interface AdminStats {
+  accounts: number
+  activeBots: number
+  totalOps: number
+  wins: number
+  losses: number
+  pnlSum: number
+  signupsPerDay: DailyPoint[]
+  opsPerDay: DailyPoint[]
+}
+
+/** Agrega métricas do sistema para os gráficos do painel administrativo. */
+export async function adminStats(): Promise<AdminStats> {
+  await ensureSchema()
+  const [accountsR, botsR, opsR, signupsR, opsDayR] = await Promise.all([
+    pool().query(`SELECT COUNT(*)::int AS n FROM accounts`),
+    pool().query(`SELECT COUNT(*)::int AS n FROM bots WHERE active = true`),
+    pool().query(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE status = 'won')::int AS wins,
+              COUNT(*) FILTER (WHERE status = 'lost')::int AS losses,
+              COALESCE(SUM(pnl), 0)::float AS pnl
+         FROM operations`,
+    ),
+    pool().query(
+      `SELECT to_char(created_at::date, 'YYYY-MM-DD') AS date, COUNT(*)::int AS count
+         FROM accounts
+        WHERE created_at >= now() - interval '29 days'
+        GROUP BY 1 ORDER BY 1`,
+    ),
+    pool().query(
+      `SELECT to_char(created_at::date, 'YYYY-MM-DD') AS date, COUNT(*)::int AS count
+         FROM operations
+        WHERE created_at >= now() - interval '13 days'
+        GROUP BY 1 ORDER BY 1`,
+    ),
+  ])
+
+  return {
+    accounts: accountsR.rows[0].n as number,
+    activeBots: botsR.rows[0].n as number,
+    totalOps: opsR.rows[0].total as number,
+    wins: opsR.rows[0].wins as number,
+    losses: opsR.rows[0].losses as number,
+    pnlSum: opsR.rows[0].pnl as number,
+    signupsPerDay: signupsR.rows as DailyPoint[],
+    opsPerDay: opsDayR.rows as DailyPoint[],
+  }
 }

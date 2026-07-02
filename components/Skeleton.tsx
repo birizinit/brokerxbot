@@ -1,4 +1,4 @@
-/** Esqueletos de carregamento exibidos enquanto o estado do robô carrega. */
+/** Esqueletos de carregamento exibidos enquanto o estado da IA carrega. */
 export function CentralSkeleton() {
   return (
     <div className="tab-stack">

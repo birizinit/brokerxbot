@@ -2,7 +2,7 @@
 
 export type OpStatus = "pending" | "won" | "lost" | "tie" | "error"
 
-/** Uma operação enviada pelo robô, enriquecida com o resultado real da corretora. */
+/** Uma operação enviada pela IA, enriquecida com o resultado real da corretora. */
 export interface BotOp {
   id: string // uuid local
   tradeId: string | null // id do trade na corretora

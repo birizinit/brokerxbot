@@ -1,5 +1,5 @@
 // Preferências de interface (estética). Estes controles têm estado salvo,
-// mas NÃO afetam a lógica de operação do robô — a corretora não expõe
+// mas NÃO afetam a lógica de operação da IA — a corretora não expõe
 // indicadores técnicos, filtros nem agendamento por API.
 
 export interface UiPrefs {
@@ -45,8 +45,8 @@ export const NOTIF_TYPES: { key: string; name: string }[] = [
   { key: "gale", name: "GALE" },
   { key: "stopWin", name: "STOP WIN" },
   { key: "stopLoss", name: "STOP LOSS" },
-  { key: "botOn", name: "Robô ligado" },
-  { key: "botOff", name: "Robô desligado" },
+  { key: "botOn", name: "IA ligada" },
+  { key: "botOff", name: "IA desligada" },
   { key: "connLost", name: "Conexão perdida" },
 ]
 

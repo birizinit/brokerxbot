@@ -30,7 +30,7 @@ export function ScheduleCard({ config, patch }: { config: BotConfig; patch: Patc
 
       <ToggleRow
         name="Não operar fora dos horários"
-        desc="Quando ligado, o robô só opera na janela e dias marcados"
+        desc="Quando ligado, a IA só opera na janela e dias marcados"
         on={sch.enabled}
         onChange={(v) => setSch({ enabled: v })}
       />

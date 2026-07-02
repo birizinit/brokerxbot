@@ -88,7 +88,7 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
           <div className="auth-logo">
             <img src="/logo-full.png" alt="Sniper Trader" className="logo-full" />
           </div>
-          <p className="subtitle">Robô de operações automáticas</p>
+          <p className="subtitle">IA de operações automáticas</p>
         </div>
 
         <div className="card card-pad card-glow">

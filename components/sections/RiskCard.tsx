@@ -25,7 +25,7 @@ export function RiskCard({ config, patch, balance }: { config: BotConfig; patch:
               onChange={(e) => patch({ stopWin: Math.max(0, Number(e.target.value) || 0) })}
             />
           </div>
-          <span className="hint">Parar o robô ao atingir</span>
+          <span className="hint">Parar a IA ao atingir</span>
         </div>
 
         <div className="field">
@@ -60,7 +60,7 @@ export function RiskCard({ config, patch, balance }: { config: BotConfig; patch:
             />
             <span className="trail">%</span>
           </div>
-          <span className="hint">{targetValue > 0 ? `≈ $ ${targetValue.toFixed(2)} do saldo` : "% do saldo (para o robô)"}</span>
+          <span className="hint">{targetValue > 0 ? `≈ $ ${targetValue.toFixed(2)} do saldo` : "% do saldo (para a IA)"}</span>
         </div>
       </div>
     </SectionCard>
