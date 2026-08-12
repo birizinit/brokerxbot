@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createAccount } from "@/lib/db"
 import { encrypt, hashPassword, makeSession } from "@/lib/crypto"
 import { forwardToBroker } from "@/lib/broker"
+import { isComprador } from "@/lib/compradores"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -40,6 +41,20 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ ok: false, error: "E-mail inválido." }, { status: 400 })
   if (password.length < 6) return NextResponse.json({ ok: false, error: "A senha precisa de ao menos 6 caracteres." }, { status: 400 })
   if (!apiKey) return NextResponse.json({ ok: false, error: "Informe sua chave API." }, { status: 400 })
+
+  // Só compradores liberados (lib/compradores.ts) podem criar conta.
+  if (!isComprador(email)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        notBuyer: true,
+        error:
+          "Este e-mail ainda não consta na nossa lista de compradores — você ainda não adquiriu o produto. " +
+          "Se você já comprou, use exatamente o mesmo e-mail da compra ou fale com o suporte.",
+      },
+      { status: 403 },
+    )
+  }
 
   // Valida a chave na corretora (best-effort: só bloqueia se for claramente inválida).
   try {

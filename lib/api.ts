@@ -142,13 +142,20 @@ export async function authLogin(email: string, password: string): Promise<{ ok: 
   }
 }
 
+export interface RegisterResult {
+  ok: boolean
+  error?: string
+  /** Verdadeiro quando o e-mail não está na lista de compradores. */
+  notBuyer?: boolean
+}
+
 export async function authRegister(data: {
   name: string
   email: string
   phone: string
   password: string
   apiKey: string
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<RegisterResult> {
   try {
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -157,7 +164,11 @@ export async function authRegister(data: {
     })
     if (res.ok) return { ok: true }
     const d = await res.json().catch(() => ({}))
-    return { ok: false, error: d.error ?? "Não foi possível criar a conta." }
+    return {
+      ok: false,
+      error: d.error ?? "Não foi possível criar a conta.",
+      notBuyer: d.notBuyer === true,
+    }
   } catch {
     return { ok: false, error: "Falha de conexão." }
   }

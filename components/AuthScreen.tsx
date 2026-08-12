@@ -16,6 +16,7 @@ import {
   ShieldIcon,
   BoltIcon,
   ActivityIcon,
+  AlertIcon,
 } from "@/components/icons"
 
 interface AuthScreenProps {
@@ -45,11 +46,13 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
   const [showKey, setShowKey] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [error, setError] = useState("")
+  const [notBuyer, setNotBuyer] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
+    setNotBuyer(false)
 
     if (mode === "register") {
       if (name.trim().length < 2) return setError("Informe seu nome completo.")
@@ -72,6 +75,7 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
       onAuthed()
     } else {
       setError(result.error ?? "Não foi possível continuar.")
+      setNotBuyer("notBuyer" in result && result.notBuyer === true)
       setLoading(false)
     }
   }
@@ -79,6 +83,7 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
   const switchMode = (m: Mode) => {
     setMode(m)
     setError("")
+    setNotBuyer(false)
   }
 
   return (
@@ -205,10 +210,20 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
               </div>
             )}
 
-            {error && (
+            {error && !notBuyer && (
               <div className="alert alert-error" role="alert">
                 <CloseIcon size={16} />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {notBuyer && (
+              <div className="alert alert-warn" role="alert">
+                <AlertIcon size={18} />
+                <div>
+                  <strong>Você ainda não adquiriu o produto.</strong>
+                  <p className="alert-sub">{error}</p>
+                </div>
               </div>
             )}
 
@@ -235,11 +250,12 @@ export function AuthScreen({ onAuthed }: AuthScreenProps) {
               </button>
               <div className="help-panel" data-open={showHelp}>
                 <div className="video">
-                  <iframe
-                    src="https://www.youtube.com/embed/0M62A5oPVNA"
+                  <video
+                    src="/como-obter-chave-api.mp4"
                     title="Como obter sua chave API"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
+                    controls
+                    playsInline
+                    preload="metadata"
                   />
                 </div>
               </div>

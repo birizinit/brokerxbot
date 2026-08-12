@@ -12,3 +12,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Arquivos-fonte enviados pelo operador (contêm dados de clientes / mídia bruta).
+# O vídeo publicado fica em public/como-obter-chave-api.mp4 e é versionado.
+/*.numbers
+/WhatsApp Video *.mp4
