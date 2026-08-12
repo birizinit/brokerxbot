@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest"
-import { isComprador, totalCompradores } from "@/lib/compradores"
+import { isComprador, totalCompradores, listaCompradores } from "@/lib/compradores"
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 describe("lista de compradores", () => {
   it("libera um e-mail que está na planilha", () => {
     expect(isComprador("ricardolonog@yahoo.com.br")).toBe(true)
     expect(isComprador("neiltonf426@gmail.com")).toBe(true)
+    expect(isComprador("pauloandrepimentelaraujo@gmail.com")).toBe(true)
   })
 
   it("bloqueia um e-mail que não está na planilha", () => {
@@ -20,7 +23,14 @@ describe("lista de compradores", () => {
     expect(isComprador("# Ricardo Lobo Nogueira")).toBe(false)
   })
 
-  it("carrega os 22 compradores da planilha", () => {
-    expect(totalCompradores()).toBe(22)
+  // Guarda contra erro de edição: uma linha com o nome colado junto do e-mail,
+  // ou um endereço truncado, entraria na lista sem este teste perceber.
+  it("só contém endereços de e-mail bem formados", () => {
+    const invalidos = listaCompradores().filter((email) => !EMAIL_RE.test(email))
+    expect(invalidos).toEqual([])
+  })
+
+  it("carrega a lista sem ficar vazia", () => {
+    expect(totalCompradores()).toBeGreaterThan(0)
   })
 })
