@@ -38,6 +38,11 @@ sandroespindola050@gmail.com         # Sandro Espindola Torres Barbosa
 pimentaaugusto@gmail.com             # Augusto Suzart Pimenta Neto
 reginaaraujo723@gmail.com            # Regina Socorro Cardoso de Araujo
 pauloandrepimentelaraujo@gmail.com   # Paulo Andre Pimentel Araujo
+hiagodealmeida@hotmail.com
+gms1961scaranello@gmsil.com
+ivair.quaresma@gmail.com
+marquinhosg8@yahoo.com.br
+idanewk@gmail.com
 `
 
 /** Normaliza um e-mail para comparação: sem espaços e tudo em minúsculo. */
