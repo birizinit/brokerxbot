@@ -43,6 +43,10 @@ gms1961scaranello@gmsil.com
 ivair.quaresma@gmail.com
 marquinhosg8@yahoo.com.br
 idanewk@gmail.com
+davibrizola.db@gmail.com
+digaocarvalho60@gmail.com
+ce.nicacio@gmail.com
+emanuelfortunato00@gmail.com
 `
 
 /** Normaliza um e-mail para comparação: sem espaços e tudo em minúsculo. */
