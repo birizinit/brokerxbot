@@ -32,7 +32,7 @@ const TABS: { id: TabId; label: string; Icon: typeof GridIcon; title: string; su
   { id: "dashboard", label: "Dashboard", Icon: GridIcon, title: "Dashboard", sub: "Visão geral em tempo real da sua IA de operações" },
   { id: "robo", label: "IA", Icon: RobotIcon, title: "IA", sub: "Controle e situação da IA de operações" },
   { id: "stats", label: "Estatísticas", Icon: ChartIcon, title: "Estatísticas", sub: "Desempenho, evolução e histórico de operações" },
-  { id: "manage", label: "Gerenciamento", Icon: ShieldIcon, title: "Gerenciamento", sub: "Gestão de risco, Sistema de Gale e Soros" },
+  { id: "manage", label: "Gerenciamento", Icon: ShieldIcon, title: "Gerenciamento", sub: "Gestão de risco, Sistema de Proteção e Soros" },
   { id: "settings", label: "Configurações", Icon: GearIcon, title: "Configurações", sub: "Preferências da conta e da operação" },
 ]
 

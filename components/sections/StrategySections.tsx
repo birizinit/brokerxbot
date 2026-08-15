@@ -12,7 +12,7 @@ const PROFILES = [
   {
     key: "cons",
     name: "Conservador",
-    desc: "Poucas operações · Gale 1 · Baixo risco",
+    desc: "Poucas operações · Proteção 1 · Baixo risco",
     cfg: { opsPerHour: 4, amount: 2, galeEnabled: true, galeMaxSteps: 1, galeMultiplier: 2, sorosEnabled: false },
   },
   {
@@ -24,7 +24,7 @@ const PROFILES = [
   {
     key: "agr",
     name: "Agressivo",
-    desc: "Mais operações · Até Gale 5 · Maior risco",
+    desc: "Mais operações · Até Proteção 5 · Maior risco",
     cfg: { opsPerHour: 20, amount: 10, galeEnabled: true, galeMaxSteps: 5, galeMultiplier: 2.2, sorosEnabled: true, sorosLevels: 3 },
   },
 ] as const
@@ -61,7 +61,9 @@ export function QuickProfiles({ config, patch }: { config: BotConfig; patch: Pat
   )
 }
 
-export function GaleCard({
+// Na interface este sistema se chama "Proteção". As chaves de configuração
+// seguem como gale* porque já estão gravadas no banco e no localStorage.
+export function ProtecaoCard({
   config,
   patch,
   prefs,
@@ -77,7 +79,7 @@ export function GaleCard({
   return (
     <SectionCard
       icon={<FlameIcon size={16} />}
-      title="Sistema de Gale"
+      title="Sistema de Proteção"
       sub="Recuperação automática de perdas"
       right={<Switch on={config.galeEnabled} onChange={(v) => patch({ galeEnabled: v })} />}
     >
@@ -86,12 +88,12 @@ export function GaleCard({
         hint={config.galeEnabled ? `nível atual: ${galeStep}` : undefined}
         value={config.galeEnabled ? config.galeMaxSteps : 0}
         options={[
-          { v: 0, label: "Sem Gale" },
-          { v: 1, label: "Gale 1" },
-          { v: 2, label: "Gale 2" },
-          { v: 3, label: "Gale 3" },
-          { v: 4, label: "Gale 4" },
-          { v: 5, label: "Gale 5" },
+          { v: 0, label: "Sem Proteção" },
+          { v: 1, label: "Proteção 1" },
+          { v: 2, label: "Proteção 2" },
+          { v: 3, label: "Proteção 3" },
+          { v: 4, label: "Proteção 4" },
+          { v: 5, label: "Proteção 5" },
         ]}
         onChange={(v) => (v === 0 ? patch({ galeEnabled: false }) : patch({ galeEnabled: true, galeMaxSteps: Number(v) }))}
       />
@@ -102,7 +104,7 @@ export function GaleCard({
         onChange={(v) => patch({ galeMultiplier: Number(v) })}
       />
       <SegRow
-        label="Tempo entre gales"
+        label="Tempo entre proteções"
         value={prefs.galeDelay}
         options={[0, 10, 30, 60].map((d) => ({ v: d, label: `${d}s` }))}
         onChange={(v) => setPrefs({ ...prefs, galeDelay: Number(v) })}

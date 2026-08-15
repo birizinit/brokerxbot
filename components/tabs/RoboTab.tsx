@@ -1,6 +1,6 @@
 "use client"
 
-import { QuickProfiles, GaleCard, SorosCard } from "@/components/sections/StrategySections"
+import { QuickProfiles, ProtecaoCard, SorosCard } from "@/components/sections/StrategySections"
 import { IndicatorsCard, FiltersCard } from "@/components/sections/TechnicalSections"
 import type { BotConfig } from "@/lib/storage"
 import type { UiPrefs } from "@/lib/prefs"
@@ -130,7 +130,7 @@ export function RoboTab({
       <QuickProfiles config={config} patch={patch} />
 
       <section className="grid two-grid">
-        <GaleCard config={config} patch={patch} prefs={prefs} setPrefs={setPrefs} galeStep={galeStep} />
+        <ProtecaoCard config={config} patch={patch} prefs={prefs} setPrefs={setPrefs} galeStep={galeStep} />
         <SorosCard config={config} patch={patch} />
       </section>
 

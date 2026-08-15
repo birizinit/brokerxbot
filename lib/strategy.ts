@@ -1,4 +1,4 @@
-// Lógica pura de Gale e Soros — sem React, totalmente testável.
+// Lógica pura de Proteção (gale) e Soros — sem React, totalmente testável.
 // O motor do bot (useBot) usa estas funções; os testes também.
 
 import type { BotConfig } from "@/lib/storage"

@@ -42,7 +42,7 @@ export const FILTERS: { key: string; name: string }[] = [
 export const NOTIF_TYPES: { key: string; name: string }[] = [
   { key: "win", name: "WIN" },
   { key: "loss", name: "LOSS" },
-  { key: "gale", name: "GALE" },
+  { key: "gale", name: "PROTEÇÃO" },
   { key: "stopWin", name: "STOP WIN" },
   { key: "stopLoss", name: "STOP LOSS" },
   { key: "botOn", name: "IA ligada" },

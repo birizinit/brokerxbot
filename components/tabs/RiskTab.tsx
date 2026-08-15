@@ -1,6 +1,6 @@
 "use client"
 
-import { QuickProfiles, GaleCard, SorosCard } from "@/components/sections/StrategySections"
+import { QuickProfiles, ProtecaoCard, SorosCard } from "@/components/sections/StrategySections"
 import { RiskCard } from "@/components/sections/RiskCard"
 import type { BotConfig } from "@/lib/storage"
 import type { UiPrefs } from "@/lib/prefs"
@@ -20,7 +20,7 @@ export function RiskTab({ config, patch, prefs, setPrefs, galeStep, balance }: R
       <RiskCard config={config} patch={patch} balance={balance} />
       <QuickProfiles config={config} patch={patch} />
       <section className="grid two-grid">
-        <GaleCard config={config} patch={patch} prefs={prefs} setPrefs={setPrefs} galeStep={galeStep} />
+        <ProtecaoCard config={config} patch={patch} prefs={prefs} setPrefs={setPrefs} galeStep={galeStep} />
         <SorosCard config={config} patch={patch} />
       </section>
     </div>

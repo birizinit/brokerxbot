@@ -12,7 +12,9 @@ export interface BotConfig {
   opsPerHour: number
   amount: number
   isDemo: boolean
-  // Sistema de Gale (martingale): ao perder, multiplica o valor da próxima.
+  // Sistema de Proteção (gale/martingale): ao perder, multiplica o valor da próxima.
+  // As chaves seguem com o prefixo gale* — já estão gravadas no banco e no
+  // localStorage dos usuários; renomear quebraria a configuração de quem já usa.
   galeEnabled: boolean
   galeMultiplier: number
   galeMaxSteps: number
