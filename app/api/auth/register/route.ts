@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { createAccount } from "@/lib/db"
 import { encrypt, hashPassword, makeSession } from "@/lib/crypto"
 import { forwardToBroker } from "@/lib/broker"
 import { isComprador } from "@/lib/compradores"
+import { createAccount, isBuyerAllowed, countAccounts, claimEvent } from "@/lib/db"
+import { notifyAdmins, milestoneFor } from "@/lib/push"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -42,8 +43,18 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (password.length < 6) return NextResponse.json({ ok: false, error: "A senha precisa de ao menos 6 caracteres." }, { status: 400 })
   if (!apiKey) return NextResponse.json({ ok: false, error: "Informe sua chave API." }, { status: 400 })
 
-  // Só compradores liberados (lib/compradores.ts) podem criar conta.
-  if (!isComprador(email)) {
+  // Só compradores liberados podem criar conta. A fonte de verdade é a tabela
+  // "buyers"; se o banco falhar, cai na semente de lib/compradores.ts em vez de
+  // barrar todo mundo.
+  let liberado: boolean
+  try {
+    liberado = await isBuyerAllowed(email)
+  } catch (e) {
+    console.error("Allowlist indisponível, usando a semente:", e)
+    liberado = isComprador(email)
+  }
+
+  if (!liberado) {
     return NextResponse.json(
       {
         ok: false,
@@ -76,6 +87,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     })
     const res = NextResponse.json({ ok: true, profile: { name, email, phone: phone ?? "" } })
     sessionCookie(res, makeSession(id))
+    await anunciarCadastro(name, email)
     return res
   } catch (e) {
     if (e instanceof Error && e.message === "EMAIL_TAKEN") {
@@ -83,5 +95,33 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
     console.error("Falha no registro:", e)
     return NextResponse.json({ ok: false, error: "Falha ao criar a conta." }, { status: 500 })
+  }
+}
+
+/**
+ * Avisa os admins do novo cadastro e, se for o caso, do marco alcançado.
+ * Nunca lança: uma falha de notificação não pode derrubar o cadastro.
+ */
+async function anunciarCadastro(name: string, email: string): Promise<void> {
+  try {
+    const total = await countAccounts()
+    await notifyAdmins({
+      title: "Novo usuário cadastrado",
+      body: `${name} (${email}) — total de ${total} conta(s).`,
+      url: "/admin",
+      tag: "signup",
+    })
+
+    const marco = milestoneFor(total)
+    if (marco !== null && (await claimEvent(`milestone:accounts:${marco}`))) {
+      await notifyAdmins({
+        title: `Marco: ${marco} usuários`,
+        body: `A plataforma acaba de chegar a ${marco} contas criadas.`,
+        url: "/admin",
+        tag: `milestone-${marco}`,
+      })
+    }
+  } catch (e) {
+    console.error("Falha ao notificar cadastro:", e)
   }
 }

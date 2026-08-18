@@ -12,17 +12,20 @@ import {
   GridIcon,
   UserIcon,
   ShieldIcon,
+  CheckIcon,
 } from "@/components/icons"
-import type { AdminStats, ClientRow } from "@/components/admin/types"
+import type { AdminStats, ClientRow, TopUser } from "@/components/admin/types"
 import { OverviewTab } from "@/components/admin/OverviewTab"
 import { ClientsTab } from "@/components/admin/ClientsTab"
 import { AdminsTab } from "@/components/admin/AdminsTab"
+import { BuyersTab } from "@/components/admin/BuyersTab"
 
 type Auth = "loading" | "out" | "in"
-type Tab = "overview" | "clients" | "admins"
+type Tab = "overview" | "buyers" | "clients" | "admins"
 
 const TABS: { id: Tab; label: string; Icon: typeof GridIcon }[] = [
   { id: "overview", label: "Visão geral", Icon: GridIcon },
+  { id: "buyers", label: "Permissões", Icon: CheckIcon },
   { id: "clients", label: "Clientes", Icon: UserIcon },
   { id: "admins", label: "Administradores", Icon: ShieldIcon },
 ]
@@ -32,6 +35,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("overview")
   const [clients, setClients] = useState<ClientRow[]>([])
   const [stats, setStats] = useState<AdminStats | null>(null)
+  const [topUsers, setTopUsers] = useState<TopUser[]>([])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -56,6 +60,7 @@ export default function AdminPage() {
     if (res.ok) {
       const data = await res.json()
       setStats(data.stats ?? null)
+      setTopUsers(Array.isArray(data.topUsers) ? data.topUsers : [])
     }
   }
 
@@ -96,6 +101,7 @@ export default function AdminPage() {
     setAuth("out")
     setClients([])
     setStats(null)
+    setTopUsers([])
   }
 
   return (
@@ -208,7 +214,8 @@ export default function AdminPage() {
             ))}
           </nav>
 
-          {tab === "overview" && <OverviewTab clients={clients} stats={stats} />}
+          {tab === "overview" && <OverviewTab clients={clients} stats={stats} topUsers={topUsers} />}
+          {tab === "buyers" && <BuyersTab onChange={loadStats} />}
           {tab === "clients" && <ClientsTab clients={clients} onReload={loadAll} />}
           {tab === "admins" && <AdminsTab />}
         </div>

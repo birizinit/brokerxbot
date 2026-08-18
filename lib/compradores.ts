@@ -39,7 +39,6 @@ pimentaaugusto@gmail.com             # Augusto Suzart Pimenta Neto
 reginaaraujo723@gmail.com            # Regina Socorro Cardoso de Araujo
 pauloandrepimentelaraujo@gmail.com   # Paulo Andre Pimentel Araujo
 hiagodealmeida@hotmail.com
-gms1961scaranello@gmsil.com
 ivair.quaresma@gmail.com
 marquinhosg8@yahoo.com.br
 idanewk@gmail.com
@@ -47,31 +46,45 @@ davibrizola.db@gmail.com
 digaocarvalho60@gmail.com
 ce.nicacio@gmail.com
 emanuelfortunato00@gmail.com
+gms1961scaranello@gmail.com          # dominio corrigido do gmsil.com
+djthassy@gmail.com
+cleisersousa@gmail.com
 `
+export interface Comprador {
+  email: string
+  nome: string
+}
 
 /** Normaliza um e-mail para comparação: sem espaços e tudo em minúsculo. */
-function normalize(email: string): string {
+export function normalize(email: string): string {
   return email.trim().toLowerCase()
 }
 
-/** E-mails liberados, já normalizados. Montado uma única vez no carregamento. */
-const COMPRADORES: ReadonlySet<string> = new Set(
-  LISTA_DE_COMPRADORES.split("\n")
-    .map((linha) => normalize(linha.split("#")[0]))
-    .filter((linha) => linha.length > 0),
-)
+/**
+ * Semente da lista. Em produção a fonte de verdade é a tabela "buyers" no
+ * banco; este bloco popula a tabela na primeira execução e serve de reserva
+ * caso o banco esteja indisponível no momento do cadastro.
+ */
+export const SEED_COMPRADORES: readonly Comprador[] = LISTA_DE_COMPRADORES.split("\n")
+  .map((linha) => {
+    const [bruto, comentario] = linha.split("#")
+    return { email: normalize(bruto), nome: (comentario ?? "").trim() }
+  })
+  .filter((c) => c.email.length > 0)
 
-/** Verdadeiro se o e-mail consta na lista de compradores. */
+const COMPRADORES: ReadonlySet<string> = new Set(SEED_COMPRADORES.map((c) => c.email))
+
+/** Verdadeiro se o e-mail consta na semente. Reserva do check no banco. */
 export function isComprador(email: string): boolean {
   return COMPRADORES.has(normalize(email))
 }
 
-/** Quantidade de compradores liberados. */
+/** Quantidade de compradores na semente. */
 export function totalCompradores(): number {
   return COMPRADORES.size
 }
 
-/** E-mails liberados, já normalizados. Útil para conferência e testes. */
+/** E-mails da semente, já normalizados. Útil para conferência e testes. */
 export function listaCompradores(): string[] {
   return Array.from(COMPRADORES)
 }

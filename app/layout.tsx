@@ -27,12 +27,17 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Sniper Trader",
   description: "Central de automação de operações na corretora.",
+  // Necessário para o painel funcionar como app instalado no iOS.
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Sniper Admin" },
+  formatDetection: { telephone: false },
 }
 
 export const viewport: Viewport = {
   themeColor: "#0a0b0d",
   width: "device-width",
   initialScale: 1,
+  // Respeita a área segura do notch quando instalado na tela inicial.
+  viewportFit: "cover",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

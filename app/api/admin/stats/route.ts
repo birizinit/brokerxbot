@@ -1,4 +1,4 @@
-import { adminStats } from "@/lib/db"
+import { adminStats, topUsers } from "@/lib/db"
 import { isAdmin } from "@/lib/admin-auth"
 
 export const dynamic = "force-dynamic"
@@ -11,8 +11,8 @@ export async function GET(): Promise<Response> {
   }
 
   try {
-    const stats = await adminStats()
-    return Response.json({ ok: true, stats })
+    const [stats, top] = await Promise.all([adminStats(), topUsers(20)])
+    return Response.json({ ok: true, stats, topUsers: top })
   } catch (error) {
     console.error("Falha ao agregar métricas:", error)
     return Response.json({ ok: false, error: "falha ao agregar métricas" }, { status: 500 })
